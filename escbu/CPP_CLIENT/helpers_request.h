@@ -1,0 +1,7 @@
+#ifndef HELPERS_REQUEST_H
+#define HELPERS_REQUEST_H	
+
+
+const int MESSAGE_MAX_LENGTH = 1024;
+
+#endif //HELPERS_REQUEST_H
