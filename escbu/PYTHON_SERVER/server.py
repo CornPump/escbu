@@ -1,16 +1,26 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+import socket
+import os
+import operation
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+HOST = '127.0.0.1'
+PORT = 1256
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+
+    # Create backup directory
+    backup_dir = operation.create_dir(os.getcwd(), operation.BACK_UP_DIR_NAME)
+    # pull port info
+    try:
+        with open('port.info', 'r') as f:
+            PORT = int(f.readline())
+    except Exception as e:
+        print(e)
+
+    # load sqlite data here!
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+
+
+
