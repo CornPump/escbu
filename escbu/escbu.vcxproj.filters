@@ -18,5 +18,37 @@
     <ClCompile Include="CPP_CLIENT\client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPP_CLIENT\operation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPP_CLIENT\base_64_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPP_CLIENT\rsa_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPP_CLIENT\aes_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPP_CLIENT\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CPP_CLIENT\operation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\helpers_request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\rsa_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\aes_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\base_64_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

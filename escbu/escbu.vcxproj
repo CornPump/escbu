@@ -111,8 +111,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Fisher\Desktop\defensive_systems\boost_1_84_0\stage\lib;C:\Users\Fisher\Downloads\cryptopp890\Win32\Output\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Fisher\Desktop\defensive_systems\boost_1_84_0\stage\lib;C:\Users\Fisher\Downloads\cryptopp890\x64\Output\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,7 +133,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CPP_CLIENT\aes_wrapper.cpp" />
+    <ClCompile Include="CPP_CLIENT\base_64_wrapper.cpp" />
     <ClCompile Include="CPP_CLIENT\client.cpp" />
+    <ClCompile Include="CPP_CLIENT\main.cpp" />
+    <ClCompile Include="CPP_CLIENT\operation.cpp" />
+    <ClCompile Include="CPP_CLIENT\rsa_wrapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CPP_CLIENT\aes_wrapper.h" />
+    <ClInclude Include="CPP_CLIENT\base_64_wrapper.h" />
+    <ClInclude Include="CPP_CLIENT\helpers_request.h" />
+    <ClInclude Include="CPP_CLIENT\operation.h" />
+    <ClInclude Include="CPP_CLIENT\rsa_wrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
