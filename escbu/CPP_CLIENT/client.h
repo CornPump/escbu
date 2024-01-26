@@ -6,8 +6,6 @@
 #include <boost/asio.hpp>
 
 
-const uint8_t CLIENT_VERSION = 3;
-
 class Client {
 
 	std::vector<uint8_t> client_id;
