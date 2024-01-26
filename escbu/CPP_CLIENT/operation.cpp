@@ -6,6 +6,14 @@
 #include "helpers_request.h"
 
 
+// Default transfer.info file ; file that represent the info about the client
+extern const std::string INFO_FILE = "transfer.info";
+extern const std::string DEFAULT_HOST = "127.0.0.1";
+extern const int DEFAULT_PORT = 1234;
+extern const std::string DEFAULT_CLIENT_NAME = "It's always darkest before the dawn";
+extern const std::string DEFAULT_FILE_TO_TRANSFER = "test.txt";
+
+
 
 long long get_file_size(const std::string& filename) {
     try {
@@ -83,4 +91,25 @@ bool check_file_exist(std::filesystem::path file_path) {
     }
     return false;
 
+}
+
+void create_info_file(const std::string& file_name, const std::string& host, int port,
+    const std::string& client_name, const std::string& file_to_transfer) {
+    
+    std::filesystem::path full_path = std::filesystem::current_path() / file_name;
+
+    std::cout << full_path.string();
+    std::ofstream infoFileStream(full_path);
+
+    if (infoFileStream.is_open()) {
+
+        infoFileStream << host << ":" << port << std::endl;
+        infoFileStream << client_name << std::endl;
+        infoFileStream << file_to_transfer << std::endl;
+
+        std::cout << "Info file created successfully." << std::endl;
+    }
+    else {
+        std::cerr << "Error: Unable to create info file." << std::endl;
+    }
 }
