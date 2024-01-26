@@ -50,5 +50,8 @@
     <ClInclude Include="CPP_CLIENT\base_64_wrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPP_CLIENT\client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

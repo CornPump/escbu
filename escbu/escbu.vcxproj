@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClInclude Include="CPP_CLIENT\aes_wrapper.h" />
     <ClInclude Include="CPP_CLIENT\base_64_wrapper.h" />
+    <ClInclude Include="CPP_CLIENT\client.h" />
     <ClInclude Include="CPP_CLIENT\helpers_request.h" />
     <ClInclude Include="CPP_CLIENT\operation.h" />
     <ClInclude Include="CPP_CLIENT\rsa_wrapper.h" />
