@@ -31,9 +31,11 @@ Client::Client() {
     boost::asio::ip::tcp::resolver resolver(io_context);
     boost::asio::connect(*sock, resolver.resolve(std::get<0>(tup), std::get<1>(tup)));
 
-    //boost::asio::ip::tcp::resolver resolver(io_context);
-    //boost::asio::connect(sock, resolver.resolve(std::get<0>(tup), std::get<1>(tup)));
+}
 
+Client::~Client() {
+
+    sock->close();
 
 }
 

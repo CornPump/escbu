@@ -18,6 +18,7 @@ class Client {
 
 public:
 	Client();
+	~Client();
 	std::string get_name();
 	std::tuple<std::string, std::string> get_socket_params();
 	boost::asio::ip::tcp::socket& get_socket();
