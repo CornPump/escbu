@@ -53,5 +53,8 @@
     <ClInclude Include="CPP_CLIENT\client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPP_CLIENT\helpers_response.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

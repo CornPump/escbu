@@ -13,6 +13,7 @@ Client::Client() {
 	
 	version = CLIENT_VERSION;
     name = this->get_name();
+    client_id.assign(DEFAULT_CLIENT_ID.begin(), DEFAULT_CLIENT_ID.end());
 
     if (name.empty()) {
 
@@ -104,7 +105,25 @@ boost::asio::ip::tcp::socket& Client::get_socket() {
     return *sock;
 }
 
+std::vector<uint8_t> Client::create_basic_header(RequestType opcode) const {
+
+    std::vector<uint8_t> message;
+
+    message.insert(message.end(), this->client_id.begin(), this->client_id.end()); 
+    message.push_back(this->version);
+    
+    uint16_t value = static_cast<uint16_t>(opcode);
+    value = htons(value);
+    message.insert(message.end(), reinterpret_cast<uint8_t*>(&value),
+        reinterpret_cast<uint8_t*>(&value) + sizeof(uint16_t));
+
+    return message;
+
+}
+
 ResponseType Client::send_request(RequestType opcode, std::string name) {
+
+    std::vector<uint8_t> message = create_basic_header(opcode);
 
     switch (opcode) {
     case RequestType::REGISTER:
@@ -116,6 +135,8 @@ ResponseType Client::send_request(RequestType opcode, std::string name) {
 
 ResponseType Client::send_request(RequestType opcode, std::string name, std::string public_key) {
 
+    std::vector<uint8_t> message = create_basic_header(opcode);
+
     switch (opcode) {
     case RequestType::SEND_PUBLIC_KEY:
     default:
@@ -124,6 +145,8 @@ ResponseType Client::send_request(RequestType opcode, std::string name, std::str
 }
 
 ResponseType Client::send_request(RequestType opcode, std::filesystem::path full_path) {
+
+    std::vector<uint8_t> message = create_basic_header(opcode);
 
     switch (opcode) {
     case RequestType::CRC_APP:

@@ -98,7 +98,6 @@ void create_info_file(const std::string& file_name, const std::string& host, int
     
     std::filesystem::path full_path = std::filesystem::current_path() / file_name;
 
-    std::cout << full_path.string();
     std::ofstream infoFileStream(full_path);
 
     if (infoFileStream.is_open()) {

@@ -25,6 +25,7 @@ public:
 	ResponseType send_request(RequestType opcode, std::string name);
 	ResponseType send_request(RequestType opcode, std::string name, std::string public_key);
 	ResponseType send_request(RequestType opcode, std::filesystem::path full_path);
+	std::vector<uint8_t> create_basic_header(RequestType opcode) const;
 
 };
 
