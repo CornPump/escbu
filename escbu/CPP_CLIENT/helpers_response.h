@@ -22,6 +22,9 @@ enum class ResponseType :uint16_t {
     // Client didn't register or the public key wasn't registered with the server
     LOGIN_F = 1606,
     // General error
-    ERROR_F = 1607
+    ERROR_F = 1607,
+    // Internal error; wrong usage of client app didn't send request to server
+    INTERNAL_F = 1
+
 
 };

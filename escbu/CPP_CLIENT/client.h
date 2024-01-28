@@ -4,7 +4,9 @@
 #include <vector>
 #include <string>
 #include <boost/asio.hpp>
-
+#include "helpers_request.h"
+#include "helpers_response.h"
+#include <filesystem>
 
 class Client {
 
@@ -18,8 +20,11 @@ public:
 	Client();
 	~Client();
 	std::string get_name();
-	std::tuple<std::string, std::string> get_socket_params();
+	std::tuple <std::string, std::string> get_socket_params();
 	boost::asio::ip::tcp::socket& get_socket();
+	ResponseType send_request(RequestType opcode, std::string name);
+	ResponseType send_request(RequestType opcode, std::string name, std::string public_key);
+	ResponseType send_request(RequestType opcode, std::filesystem::path full_path);
 
 };
 

@@ -5,6 +5,9 @@
 #include <iostream>
 #include <tuple>
 #include <boost/asio.hpp>
+#include "helpers_request.h"
+
+
 
 Client::Client() {
 	
@@ -99,4 +102,36 @@ std::tuple<std::string, std::string> Client::get_socket_params() {
 
 boost::asio::ip::tcp::socket& Client::get_socket() {
     return *sock;
+}
+
+ResponseType Client::send_request(RequestType opcode, std::string name) {
+
+    switch (opcode) {
+    case RequestType::REGISTER:
+    case RequestType::LOGIN:
+    default:
+        return ResponseType::INTERNAL_F;
+    }
+}
+
+ResponseType Client::send_request(RequestType opcode, std::string name, std::string public_key) {
+
+    switch (opcode) {
+    case RequestType::SEND_PUBLIC_KEY:
+    default:
+        return ResponseType::INTERNAL_F;
+    }
+}
+
+ResponseType Client::send_request(RequestType opcode, std::filesystem::path full_path) {
+
+    switch (opcode) {
+    case RequestType::CRC_APP:
+    case RequestType::CRC_DEN_RE:
+    case RequestType::CRC_DEN_FI:
+    case RequestType::SEND_FILE:
+    default:
+        return ResponseType::INTERNAL_F;
+    }
+
 }
