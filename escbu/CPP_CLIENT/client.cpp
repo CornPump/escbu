@@ -121,19 +121,47 @@ std::vector<uint8_t> Client::create_basic_header(RequestType opcode) const {
 
 }
 
-ResponseType Client::send_request(RequestType opcode, std::string name) {
+ResponseType Client::send_request(RequestType opcode) {
 
     std::vector<uint8_t> message = create_basic_header(opcode);
+    std::string nname = this->name;
+
+    if (nname.length() >= NAME_MAX_LENGTH - 1) {
+
+        std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
+        return ResponseType::INTERNAL_F;
+    }
+
+    // pad the string with null terminators so it has const size no matter its original size.
+       
+    nname.resize(NAME_MAX_LENGTH, '\0');
+    ULONG32 nname_size = static_cast<ULONG32>(NAME_MAX_LENGTH);
+    nname_size = htonl(nname_size);
+
+    message.insert(message.end(), reinterpret_cast<uint8_t*>(&nname_size),
+        reinterpret_cast<uint8_t*>(&nname_size) + sizeof(uint32_t));
+
+    message.insert(message.end(), nname.begin(), nname.end());
+    
+    // send request, then check what to do after.
 
     switch (opcode) {
-    case RequestType::REGISTER:
-    case RequestType::LOGIN:
+    case RequestType::REGISTER:{
+
+    }
+
+    case RequestType::LOGIN: {
+    
+        boost::asio::write(this->get_socket(), boost::asio::buffer(message));
+        std::cout << "Sent Request "<< static_cast<int>(RequestType::LOGIN) << ":Login" << std::endl;
+    }
+
     default:
         return ResponseType::INTERNAL_F;
     }
 }
 
-ResponseType Client::send_request(RequestType opcode, std::string name, std::string public_key) {
+ResponseType Client::send_request(RequestType opcode, std::string public_key) {
 
     std::vector<uint8_t> message = create_basic_header(opcode);
 

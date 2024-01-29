@@ -4,8 +4,9 @@
 #include <string.h>
 #include <cstdint>
 
-
+// Max LENGTHS FOR VARIOUS THINGS
 const int MESSAGE_MAX_LENGTH = 1024;
+const size_t NAME_MAX_LENGTH = 255;
 
 // Basic and minimal header's params for request, this table represents their size, -1 = unlimited
 const int DEFAULT_CLIENT_ID_SIZE = 16;

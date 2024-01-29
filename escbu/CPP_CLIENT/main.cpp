@@ -6,6 +6,7 @@
 #include <iomanip>
 #include "operation.h"
 #include "client.h"
+#include "helpers_request.h"
 
 
 using boost::asio::ip::tcp;
@@ -120,19 +121,17 @@ int main()
 
 	//my_rsa_example();
 
-	create_info_file(INFO_FILE, DEFAULT_HOST, DEFAULT_PORT, DEFAULT_CLIENT_NAME, DEFAULT_FILE_TO_TRANSFER);
+	//create_info_file(INFO_FILE, DEFAULT_HOST, DEFAULT_PORT, DEFAULT_CLIENT_NAME, DEFAULT_FILE_TO_TRANSFER);
 
+	
 	try{
 		Client client;
-		std::string msg = "WORK YOU HOLE-MOL";
-		std::cout << "Sending message.. " << msg << std::endl;
-		boost::asio::write(client.get_socket(), boost::asio::buffer(msg));
-		std::cout << "Message sent" << std::endl;
+		ResponseType response = client.send_request(RequestType::REGISTER);
+
 	}
 	catch (const std::exception& e) {
 		std::cerr << "Exception in main in creating client: " << e.what() << std::endl;
 	}
-
 	
 	return 0;
 }
