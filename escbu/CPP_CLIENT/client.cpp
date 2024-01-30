@@ -147,6 +147,9 @@ ResponseType Client::send_request(RequestType opcode) {
 
     switch (opcode) {
     case RequestType::REGISTER:{
+        boost::asio::write(this->get_socket(), boost::asio::buffer(message));
+        std::cout << "Sent Request " << static_cast<int>(RequestType::REGISTER) << ":REGISTER" << std::endl;
+        break;
 
     }
 
@@ -154,6 +157,7 @@ ResponseType Client::send_request(RequestType opcode) {
     
         boost::asio::write(this->get_socket(), boost::asio::buffer(message));
         std::cout << "Sent Request "<< static_cast<int>(RequestType::LOGIN) << ":Login" << std::endl;
+        break;
     }
 
     default:
