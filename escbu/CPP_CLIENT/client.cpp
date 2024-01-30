@@ -6,7 +6,7 @@
 #include <tuple>
 #include <boost/asio.hpp>
 #include "helpers_request.h"
-
+#include "response_handler.h"
 
 
 Client::Client() {
@@ -149,6 +149,10 @@ ResponseType Client::send_request(RequestType opcode) {
     case RequestType::REGISTER:{
         boost::asio::write(this->get_socket(), boost::asio::buffer(message));
         std::cout << "Sent Request " << static_cast<int>(RequestType::REGISTER) << ":REGISTER" << std::endl;
+
+        ResponseHandler resh;
+        resh.read_minimum_header(this->get_socket());
+        resh.print();
         break;
 
     }

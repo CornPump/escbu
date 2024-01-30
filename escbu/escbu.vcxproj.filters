@@ -33,6 +33,9 @@
     <ClCompile Include="CPP_CLIENT\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPP_CLIENT\response_handler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPP_CLIENT\operation.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CPP_CLIENT\helpers_response.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\response_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

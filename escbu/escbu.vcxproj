@@ -138,6 +138,7 @@
     <ClCompile Include="CPP_CLIENT\client.cpp" />
     <ClCompile Include="CPP_CLIENT\main.cpp" />
     <ClCompile Include="CPP_CLIENT\operation.cpp" />
+    <ClCompile Include="CPP_CLIENT\response_handler.cpp" />
     <ClCompile Include="CPP_CLIENT\rsa_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="CPP_CLIENT\helpers_request.h" />
     <ClInclude Include="CPP_CLIENT\helpers_response.h" />
     <ClInclude Include="CPP_CLIENT\operation.h" />
+    <ClInclude Include="CPP_CLIENT\response_handler.h" />
     <ClInclude Include="CPP_CLIENT\rsa_wrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

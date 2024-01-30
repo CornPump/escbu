@@ -4,6 +4,13 @@
 
 #include <cstdint>
 
+// Basic and minimal header's params for request, this table represents their size, -1 = unlimited
+const int DEFAULT_SERVER_VERSION_SIZE = 1;
+const int DEFAULT_SERVER_CODE_SIZE = 2;
+const int DEFAULT_SERVER_PAYLOAD_SIZE_SIZE = 4;
+const int DEFAULT_SERVER_PAYLOAD_SIZE = -1;
+
+const int MIN_RESPONSE_SIZE = DEFAULT_SERVER_VERSION_SIZE + DEFAULT_SERVER_CODE_SIZE + DEFAULT_SERVER_PAYLOAD_SIZE_SIZE;
 
 enum class ResponseType :uint16_t {
 
