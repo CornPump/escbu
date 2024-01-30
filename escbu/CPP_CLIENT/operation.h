@@ -11,7 +11,7 @@ void receive_file(const std::string& filename, boost::asio::ip::tcp::socket& soc
 bool check_file_exist(std::filesystem::path file_path);
 void create_info_file(const std::string& file_name, const std::string& host, int port,
 						const std::string& client_name, const std::string& file_to_transfer);
-
+void clear(uint8_t message[], int length);
 
 // Default transfer.info file ; file that represent the info about the client
 extern const std::string INFO_FILE;

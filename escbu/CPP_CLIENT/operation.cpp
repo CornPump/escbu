@@ -112,3 +112,8 @@ void create_info_file(const std::string& file_name, const std::string& host, int
         std::cerr << "Error: Unable to create info file." << std::endl;
     }
 }
+
+void clear(uint8_t message[], int length) {
+    for (int i = 0; i < length; i++)
+        message[i] = '\0';
+}

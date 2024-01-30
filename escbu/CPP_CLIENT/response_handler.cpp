@@ -12,16 +12,15 @@ ResponseType ResponseHandler::read_minimum_header(boost::asio::ip::tcp::socket& 
 
 uint8_t ResponseHandler::get_s_version() {
 
-	std::cout << "no compiler crying";
-
+	return this->s_version;
 }
 ResponseType ResponseHandler::get_opcode() {
 
-	std::cout << "no compiler crying";
+	return this->opcode;
 
 }
 uint32_t ResponseHandler::get_payload() {
 
-	std::cout << "no compiler crying";
+	return this->payload_size
 
 }
