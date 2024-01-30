@@ -22,16 +22,16 @@ class RequestHandler:
 
     @staticmethod
     def convert_to_little_endian(num: int, size: int):
+
         if size == 4:
-            to_ret = struct.pack("<I", num)
+            to_ret = struct.pack(">I", num)
 
         if size == 1:
-                to_ret = struct.pack("<B", num)
+                to_ret = struct.pack(">B", num)
 
         if size == 2:
-            to_ret = struct.pack("<H", num)
-
-        return to_ret[0]
+            to_ret = struct.pack(">H", num)
+        return to_ret
 
     @staticmethod
     def convert_from_little_endian(num: int, size: int):

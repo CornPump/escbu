@@ -41,7 +41,8 @@ if __name__ == "__main__":
             rm = request_manager.RequestManager(conn)
 
             rm.start_request_sequence()
-            print(rm)
 
+            while(True):
+                pass
 
 

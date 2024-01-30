@@ -18,14 +18,19 @@ class ResponseHandler():
     def send_request(self):
 
 
-        rh = request_handler.RequestHandler()
-        header = rh.convert_to_little_endian(self.server_version,helpers_response.DEFAULT_SERVER_VERSION_SIZE)\
-                 + rh.convert_to_little_endian(self.opcode,helpers_response.DEFAULT_SERVER_CODE_SIZE) + \
-                 rh.convert_to_little_endian(self.payload_size,helpers_response.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)\
-                 + self.payload
+        rh = request_handler.RequestHandler(self.conn)
+
+        if not self.payload:
+            header = rh.convert_to_little_endian(self.server_version,helpers_response.DEFAULT_SERVER_VERSION_SIZE)\
+                     + rh.convert_to_little_endian(self.opcode,helpers_response.DEFAULT_SERVER_CODE_SIZE) + \
+                     rh.convert_to_little_endian(self.payload_size,helpers_response.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
+
+
+        print('Header= ',header)
 
         try:
             self.conn.sendall(header)
-        except:
+        except Exception as e:
+            print(e)
             print("couldn't send message")
             exit()

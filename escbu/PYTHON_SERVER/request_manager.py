@@ -1,6 +1,7 @@
 import request_handler
+import response_handler
 import helpers_request
-
+import helpers_response
 class RequestManager:
 
     def __init__(self, connection):
@@ -28,3 +29,27 @@ class RequestManager:
         # append to request_manager
         self.append(rh)
         # validate the request
+        self.validate_request()
+
+
+    def get_latest_req(self):
+        return self.request_lst[self.num_requests - 1]
+
+    def validate_request(self):
+
+        rh = self.get_latest_req()
+
+        opcode = rh.opcode
+        #if first request in the sequence
+        if self.num_requests == 1:
+            if opcode == helpers_request.REQUEST['REGISTER']:
+                print(f"Validate request failed sending error: {helpers_response.Response['ERROR_F']}")
+                resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['ERROR_F'], "")
+                resh.send_request()
+            elif opcode == helpers_request.REQUEST['LOGIN']:
+                pass
+            else:
+                print(f"Validate request failed sending error: {helpers_response.Response['ERROR_F']}")
+                resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['ERROR_F'], "")
+                resh.send_request()
+
