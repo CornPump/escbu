@@ -10,7 +10,7 @@ class RequestHandler:
         self.conn = connection
         self.client_id = 0
         self.client_ver = 0
-        self.opcode = []
+        self.opcode = 0
         self.payload_size = 0
         self.name = ""
         self.file_name = ""
@@ -48,7 +48,7 @@ class RequestHandler:
 
     def read_minimum_header(self):
 
-        # read all minimum header data
+        # read minimum header data
         client_id = self.conn.recv(helpers_request.DEFAULT_CLIENT_ID_SIZE)
         client_version = self.convert_from_little_endian(self.conn.recv(helpers_request.DEFAULT_CLIENT_VERSION_SIZE),
                                                          helpers_request.DEFAULT_CLIENT_VERSION_SIZE)
@@ -56,7 +56,11 @@ class RequestHandler:
                                                  helpers_request.DEFAULT_CLIENT_CODE_SIZE)
         payload_size = self.convert_from_little_endian(self.conn.recv(helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE),
                                                        helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
-        print("Recived message:\n", client_id)
-        print("client_version", client_version)
-        print("opcode", opcode)
-        print("payload_size", payload_size)
+
+        self.client_id = client_id
+        self.client_ver = client_version
+        self.opcode = opcode
+        self.payload_size = payload_size
+
+    #def validate_minimum_header(self):
+

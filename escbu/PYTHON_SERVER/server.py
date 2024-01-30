@@ -4,7 +4,7 @@ import operation
 import uuid
 import struct
 import request_handler
-
+import request_manager
 
 HOST = '127.0.0.1'
 PORT = 1256
@@ -27,14 +27,21 @@ if __name__ == "__main__":
 
     print(f"Connecting to socket on port:{PORT}, host:{HOST} .. ")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
+        try:
+            s.bind((HOST, PORT))
+        except Exception as e:
+            print(e)
+            exit()
         print("Listening and waiting for clients..")
         s.listen()
         conn, addr = s.accept()
         print('Connected by user', addr)
         with conn:
             s.settimeout(5)
-            rh = request_handler.RequestHandler(conn)
-            rh.read_minimum_header()
+            rm = request_manager.RequestManager(conn)
+
+            rm.start_request_sequence()
+            print(rm)
+
 
 
