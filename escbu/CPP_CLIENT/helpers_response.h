@@ -1,7 +1,7 @@
 #ifndef HELPERS_RESPONSE_H
 #define HELPERS_RESPONSE_H	
 
-#endif //HELPERS_RESPONSE_H
+
 #include <cstdint>
 
 
@@ -28,3 +28,4 @@ enum class ResponseType :uint16_t {
 
 
 };
+#endif //HELPERS_RESPONSE_H
