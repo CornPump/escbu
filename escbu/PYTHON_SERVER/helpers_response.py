@@ -1,5 +1,11 @@
 
 
+# Size in bytes of request params, -1 = unlimited
+DEFAULT_SERVER_VERSION_SIZE = 1
+DEFAULT_SERVER_CODE_SIZE = 2
+DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE = 4
+DEFAULT_CLIENT_PAYLOAD_SIZE = -1
+
 Response = {
     # First step of registeration succeed (response to 1025)
     'REGISTER_S':1600,

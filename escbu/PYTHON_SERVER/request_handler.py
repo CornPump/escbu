@@ -2,6 +2,7 @@ import struct
 import helpers_request
 
 
+
 class RequestHandler:
 
     # connection = socket connection
@@ -49,18 +50,33 @@ class RequestHandler:
     def read_minimum_header(self):
 
         # read minimum header data
-        client_id = self.conn.recv(helpers_request.DEFAULT_CLIENT_ID_SIZE)
-        client_version = self.convert_from_little_endian(self.conn.recv(helpers_request.DEFAULT_CLIENT_VERSION_SIZE),
-                                                         helpers_request.DEFAULT_CLIENT_VERSION_SIZE)
-        opcode = self.convert_from_little_endian(self.conn.recv(helpers_request.DEFAULT_CLIENT_CODE_SIZE),
-                                                 helpers_request.DEFAULT_CLIENT_CODE_SIZE)
-        payload_size = self.convert_from_little_endian(self.conn.recv(helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE),
-                                                       helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
+        min_header = self.conn.recv(helpers_request.DEFAULT_CLIENT_ID_SIZE +
+                                    helpers_request.DEFAULT_CLIENT_VERSION_SIZE +
+                                    helpers_request.DEFAULT_CLIENT_CODE_SIZE +
+                                    helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
+
+        adder = helpers_request.DEFAULT_CLIENT_ID_SIZE
+
+        client_id = min_header[:adder]
+
+        client_version = self.convert_from_little_endian(
+            min_header[adder:adder + helpers_request.DEFAULT_CLIENT_VERSION_SIZE],
+        helpers_request.DEFAULT_CLIENT_VERSION_SIZE)
+        adder += helpers_request.DEFAULT_CLIENT_VERSION_SIZE
+
+
+        opcode = self.convert_from_little_endian(
+            min_header[adder:adder + helpers_request.DEFAULT_CLIENT_CODE_SIZE],
+            helpers_request.DEFAULT_CLIENT_CODE_SIZE)
+        adder += helpers_request.DEFAULT_CLIENT_CODE_SIZE
+
+        payload_size = self.convert_from_little_endian(
+            min_header[adder:adder + helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE],
+            helpers_request.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
 
         self.client_id = client_id
         self.client_ver = client_version
         self.opcode = opcode
         self.payload_size = payload_size
 
-    #def validate_minimum_header(self):
 
