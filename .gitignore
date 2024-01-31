@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 PYTHON_SERVER\backup_server
+
+/escbu/PYTHON_SERVER/test.py
+/escbu/PYTHON_SERVER/defensive.db
