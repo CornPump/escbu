@@ -3,7 +3,7 @@ import response_handler
 import helpers_request
 import helpers_response
 import data_handler
-
+import uuid
 class RequestManager:
 
     def __init__(self, connection, data_handler):
@@ -39,7 +39,7 @@ class RequestManager:
         return self.request_lst[self.num_requests - 1]
 
     def validate_request(self):
-
+        print('Validating Request..')
         rh = self.get_latest_req()
 
         opcode = rh.opcode
@@ -49,12 +49,22 @@ class RequestManager:
                 if rh.payload_size == helpers_request.CLIENT_NAME_SIZE:
                     rh.name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
 
-                    # check if client name already exists, if it isn't send REGISTER_F
+                    # check if client name already exists, if it is send REGISTER_F
+                    name_exist = self.dth.is_name_exist(rh.name)
 
-                    print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}")
-                    resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], "")
-                    resh.send_request()
-                    # send accept response
+                    if name_exist:
+                        resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_F'], "")
+                        resh.send_request()
+
+                    else:
+                        # add client to database and send register success Response
+                        new_uuid = uuid.uuid4().bytes
+                        self.dth.add_new_client(id=new_uuid, name=rh.name)
+
+                        print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}")
+                        resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], "")
+                        resh.send_request()
+
                     # receive request with public key
                     # generate AES key
                     # create entry in table for client (SQLITE & RAM)

@@ -10,8 +10,6 @@ PORT = 1256
 
 if __name__ == "__main__":
 
-    new_uuid = uuid.uuid4()
-
     # Create backup directory
     print("Creating back-up dir.. ")
     backup_dir = operation.create_dir(os.getcwd(), operation.BACK_UP_DIR_NAME)
@@ -41,7 +39,7 @@ if __name__ == "__main__":
             rm = request_manager.RequestManager(conn,dth)
 
             rm.start_request_sequence()
-            print(rm)
+            #print(rm)
             while(True):
                 pass
 

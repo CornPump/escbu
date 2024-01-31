@@ -26,7 +26,7 @@ class ResponseHandler():
                      rh.convert_to_little_endian(self.payload_size,helpers_response.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
 
 
-        print('Header= ',header)
+        #print('Header= ',header)
 
         try:
             self.conn.sendall(header)

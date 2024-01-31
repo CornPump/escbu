@@ -46,6 +46,37 @@ class SqlDbHandler:
         conn.close()
         return lst
 
+    def is_name_exist(self,name):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+                    SELECT * FROM clients
+                    WHERE Name = ?
+                ''', (name,))
+
+        results = cursor.fetchone()
+        conn.close()
+
+        if results:
+            return True
+
+        return False
+
+    def add_new_client(self, id, name, publickey, lastseen, aeskey):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        columns = [clients_keys[0],clients_keys[1],clients_keys[2],clients_keys[3],clients_keys[4]]
+        sql_query = f'''
+            INSERT INTO clients ({', '.join(columns)})
+            VALUES (?, ?, ?, ?, ?)
+        '''
+        cursor.execute(sql_query, (id, name, publickey, lastseen, aeskey))
+
+        conn.commit()
+        conn.close()
+
 """
     def part_entry(self):
         conn = sqlite3.connect(self.db_name)
