@@ -153,6 +153,21 @@ ResponseType Client::send_request(RequestType opcode) {
         ResponseHandler resh;
         resh.read_minimum_header(this->get_socket());
         resh.print();
+        ResponseType res = resh.get_opcode();
+
+        // register sequence success, can continue
+        if (res == ResponseType::REGISTER_S) {}
+
+        // register sequence fail, can't continue
+        else {
+
+            if (res == ResponseType::REGISTER_F) {          
+                std::cout << "Registeration failure due to code: " << static_cast<int>(ResponseType::REGISTER_F) << std::endl;
+                return ResponseType::REGISTER_F;
+            }
+            else { return this->write_general_error_message();}
+        
+        }
         break;
 
     }
@@ -192,5 +207,12 @@ ResponseType Client::send_request(RequestType opcode, std::filesystem::path full
     default:
         return ResponseType::INTERNAL_F;
     }
+
+}
+
+ResponseType Client::write_general_error_message() {
+
+    std::cout << "Registeration failure due to general error code: " << static_cast<int>(ResponseType::ERROR_F) << std::endl;
+    return ResponseType::ERROR_F;
 
 }

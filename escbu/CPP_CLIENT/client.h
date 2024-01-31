@@ -15,6 +15,7 @@ class Client {
 	std::string name;
 	boost::asio::io_context io_context;
 	std::unique_ptr<boost::asio::ip::tcp::socket> sock;
+	ResponseType write_general_error_message();
 
 public:
 	Client();
