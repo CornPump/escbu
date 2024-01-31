@@ -2,12 +2,15 @@ import request_handler
 import response_handler
 import helpers_request
 import helpers_response
+import data_handler
+
 class RequestManager:
 
-    def __init__(self, connection):
+    def __init__(self, connection, data_handler):
         self.conn = connection
         self.request_lst = []
         self.num_requests = 0
+        self.dth = data_handler
 
     def __str__(self):
         s = f"num_of_request:{self.num_requests}\n"

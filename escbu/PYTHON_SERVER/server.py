@@ -38,7 +38,7 @@ if __name__ == "__main__":
         print('Connected by user', addr)
         with conn:
             s.settimeout(5)
-            rm = request_manager.RequestManager(conn)
+            rm = request_manager.RequestManager(conn,dth)
 
             rm.start_request_sequence()
             print(rm)
