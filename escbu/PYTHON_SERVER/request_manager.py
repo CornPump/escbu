@@ -43,9 +43,27 @@ class RequestManager:
         #if first request in the sequence
         if self.num_requests == 1:
             if opcode == helpers_request.REQUEST['REGISTER']:
-                print(f"Validate request failed sending error: {helpers_response.Response['ERROR_F']}")
-                resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['ERROR_F'], "")
-                resh.send_request()
+                if rh.payload_size == helpers_request.CLIENT_NAME_SIZE:
+                    rh.name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
+
+                    # check if client name already exists, if it isn't send REGISTER_F
+
+                    print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}")
+                    resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], "")
+                    resh.send_request()
+                    # send accept response
+                    # receive request with public key
+                    # generate AES key
+                    # create entry in table for client (SQLITE & RAM)
+                    # encrpyt AES key with public key
+                    # send to client
+
+
+                # invalid request, sending general error
+                else:
+                    print(f"Validate request failed sending error: {helpers_response.Response['ERROR_F']}")
+                    resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['ERROR_F'], "")
+                    resh.send_request()
             elif opcode == helpers_request.REQUEST['LOGIN']:
                 pass
             else:
