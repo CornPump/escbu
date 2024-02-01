@@ -2,16 +2,13 @@ import socket
 import os
 import operation
 import uuid
-import struct
-import request_handler
 import request_manager
+import data_handler
 
 HOST = '127.0.0.1'
 PORT = 1256
 
 if __name__ == "__main__":
-
-    new_uuid = uuid.uuid4()
 
     # Create backup directory
     print("Creating back-up dir.. ")
@@ -24,6 +21,7 @@ if __name__ == "__main__":
         print(e)
 
     # load sqlite data here!
+    dth = data_handler.DataHandler('defensive.db', use_ram=True, use_db=True)
 
     print(f"Connecting to socket on port:{PORT}, host:{HOST} .. ")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -38,10 +36,10 @@ if __name__ == "__main__":
         print('Connected by user', addr)
         with conn:
             s.settimeout(5)
-            rm = request_manager.RequestManager(conn)
+            rm = request_manager.RequestManager(conn,dth)
 
             rm.start_request_sequence()
-
+            #print(rm)
             while(True):
                 pass
 

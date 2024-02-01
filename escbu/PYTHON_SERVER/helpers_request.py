@@ -1,5 +1,7 @@
 MESSAGE_MAX_SIZE = 1024
+CLIENT_NAME_SIZE = 255
 SERVER_VERSION = 3
+
 
 # Size in bytes of request params, -1 = unlimited
 DEFAULT_CLIENT_ID_SIZE = 16

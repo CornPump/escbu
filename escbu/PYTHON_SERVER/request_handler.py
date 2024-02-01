@@ -79,4 +79,6 @@ class RequestHandler:
         self.opcode = opcode
         self.payload_size = payload_size
 
+        print(f'Received Request: (client_id:{client_id},opcode:{opcode},client_version:{client_version},payload_size:{payload_size})')
+
 
