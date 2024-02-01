@@ -15,6 +15,7 @@ class ResponseHandler {
 public:
 
     ResponseType read_minimum_header(boost::asio::ip::tcp::socket& sock);
+    std::vector<uint8_t> read_payload(boost::asio::ip::tcp::socket& sock);
     uint8_t get_s_version();
     ResponseType get_opcode();
     uint32_t get_payload();

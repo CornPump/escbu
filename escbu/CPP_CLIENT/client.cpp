@@ -7,6 +7,9 @@
 #include <boost/asio.hpp>
 #include "helpers_request.h"
 #include "response_handler.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 
 Client::Client() {
@@ -43,6 +46,15 @@ Client::~Client() {
 
 }
 
+
+void Client::print() const{
+
+    std::cout << "(client_id:";
+    for (uint8_t byte : this->client_id) {
+        std::cout << std::hex << static_cast<int>(byte);
+    }
+    std::cout << " ,client_version:" << static_cast<int>(this->version) << " ,name:" << this->name << ")" << std::endl;
+}
 
 std::string Client::get_name() {
 
@@ -121,27 +133,37 @@ std::vector<uint8_t> Client::create_basic_header(RequestType opcode) const {
 
 }
 
-ResponseType Client::send_request(RequestType opcode) {
+std::vector<uint8_t> Client::append_fixed_size_string_to_message(std::vector<uint8_t>& message, std::string& str) {
 
-    std::vector<uint8_t> message = create_basic_header(opcode);
-    std::string nname = this->name;
-
-    if (nname.length() >= NAME_MAX_LENGTH - 1) {
+    if (str.length() >= NAME_MAX_LENGTH - 1) {
 
         std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
-        return ResponseType::INTERNAL_F;
+        std::vector<uint8_t> empty;
+        return empty;
     }
 
     // pad the string with null terminators so it has const size no matter its original size.
-       
-    nname.resize(NAME_MAX_LENGTH, '\0');
+
+    str.resize(NAME_MAX_LENGTH, '\0');
     ULONG32 nname_size = static_cast<ULONG32>(NAME_MAX_LENGTH);
     nname_size = htonl(nname_size);
 
     message.insert(message.end(), reinterpret_cast<uint8_t*>(&nname_size),
         reinterpret_cast<uint8_t*>(&nname_size) + sizeof(uint32_t));
 
-    message.insert(message.end(), nname.begin(), nname.end());
+    message.insert(message.end(), str.begin(), str.end());
+
+    return message;
+
+}
+
+ResponseType Client::send_request(RequestType opcode) {
+
+    std::vector<uint8_t> tmp_msg = create_basic_header(opcode);
+    //std::string nname = this->name;
+    std::vector<uint8_t> message = append_fixed_size_string_to_message(tmp_msg, this->name);
+    if (message.empty()) {return ResponseType::INTERNAL_F;}
+    
     
     // send request, then check what to do after.
 
@@ -156,7 +178,17 @@ ResponseType Client::send_request(RequestType opcode) {
         ResponseType res = resh.get_opcode();
 
         // register sequence success, can continue
-        if (res == ResponseType::REGISTER_S) {}
+        if (res == ResponseType::REGISTER_S) {
+            
+            set_client_id(convert_uuid_from_binary(resh.read_payload(this->get_socket())));
+            std::cout << "Received and set uuid" << std::endl;
+            this->print();
+
+            //generate RSA pair , create me.info & priv.key files , send request 1026
+            //this->start_registration_second_phase();
+            
+
+        }
 
         // register sequence fail, can't continue
         else {
@@ -216,3 +248,39 @@ ResponseType Client::write_general_error_message() {
     return ResponseType::ERROR_F;
 
 }
+
+void Client::set_client_id(const std::vector<uint8_t>& client_id) {
+    this->client_id = client_id;
+}
+
+std::vector<uint8_t> Client::convert_uuid_from_binary(std::vector<uint8_t> uuid_buff) {
+
+    boost::uuids::uuid uuid;
+    std::copy(uuid_buff.begin(), uuid_buff.end(), uuid.begin());
+
+    // Convert the UUID to a binary representation
+    std::vector<uint8_t> to_ret(uuid.begin(), uuid.end());
+
+    return to_ret;
+}
+
+std::string Client::convert_uuid_to_string(std::vector<uint8_t> vec) {
+
+    // Convert the UUID bytes to a string
+    std::ostringstream oss;
+    for (uint8_t byte : vec) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    }
+    std::string uuid_s = oss.str();
+
+    // Remove hyphens from the string
+    uuid_s.erase(std::remove(uuid_s.begin(), uuid_s.end(), '-'), uuid_s.end());
+
+    return uuid_s;
+}
+
+/*void Client::start_registration_second_phase() {
+
+    
+
+}*/

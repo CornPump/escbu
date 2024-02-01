@@ -6,6 +6,8 @@
 
 
 
+
+
 void ResponseHandler::print() const {
 
     std::cout << "(c_version:" << static_cast<int>(this->s_version) <<
@@ -40,6 +42,24 @@ ResponseType ResponseHandler::read_minimum_header(boost::asio::ip::tcp::socket& 
     this->payload_size = htonl(this->payload_size);
     return this->opcode;
 
+}
+
+std::vector<uint8_t> ResponseHandler::read_payload(boost::asio::ip::tcp::socket& sock) {
+    
+    uint8_t data[MESSAGE_MAX_LENGTH];
+    clear(data, MESSAGE_MAX_LENGTH);
+    try {
+        boost::asio::read(sock, boost::asio::buffer(data, this->get_payload()));
+    }
+    // If error or time out send client error message and retorn 0
+
+    catch (const boost::system::system_error& e) {
+        std::cerr << "Boost.Asio read error: " << e.what() << std::endl;
+    }
+
+    std::vector<uint8_t> to_ret(data, data + this->get_payload());
+
+    return to_ret;
 }
 
 
