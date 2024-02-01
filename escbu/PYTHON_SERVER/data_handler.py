@@ -65,7 +65,6 @@ class DataHandler:
             return self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
         elif self.state == State['TT']:
-            print('in TT')
             self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
             self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
