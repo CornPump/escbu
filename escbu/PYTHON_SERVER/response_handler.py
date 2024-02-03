@@ -20,13 +20,15 @@ class ResponseHandler():
 
         rh = request_handler.RequestHandler(self.conn)
 
-        if not self.payload:
-            header = rh.convert_to_little_endian(self.server_version,helpers_response.DEFAULT_SERVER_VERSION_SIZE)\
-                     + rh.convert_to_little_endian(self.opcode,helpers_response.DEFAULT_SERVER_CODE_SIZE) + \
-                     rh.convert_to_little_endian(self.payload_size,helpers_response.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
+        header = rh.convert_to_little_endian(self.server_version,helpers_response.DEFAULT_SERVER_VERSION_SIZE)\
+                 + rh.convert_to_little_endian(self.opcode,helpers_response.DEFAULT_SERVER_CODE_SIZE) + \
+                 rh.convert_to_little_endian(self.payload_size,helpers_response.DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE)
+
+        if self.payload:
+            header += self.payload
 
 
-        #print('Header= ',header)
+        print('Header= ',header)
 
         try:
             self.conn.sendall(header)

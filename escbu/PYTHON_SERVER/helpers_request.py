@@ -1,6 +1,7 @@
 MESSAGE_MAX_SIZE = 1024
 CLIENT_NAME_SIZE = 255
 SERVER_VERSION = 3
+CLIENT_PUBLIC_KEY_SIZE = 160
 
 
 # Size in bytes of request params, -1 = unlimited
