@@ -1,5 +1,6 @@
 import sqlite_handler
 import ram_handler
+import datetime
 from data_helpers import State
 
 
@@ -57,7 +58,8 @@ class DataHandler:
 
             return to_ret_bool
 
-    def add_new_client(self,id=None,name=None,publickey=None,lastseen=None,aeskey=None):
+    def add_new_client(self,id=None,name=None,publickey=None,aeskey=None):
+        lastseen = datetime.datetime.now()
         if self.state == State['FT']:
             return self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
@@ -67,6 +69,18 @@ class DataHandler:
         elif self.state == State['TT']:
             self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
             self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
+
+    def add_publickey(self,public_key,client_id):
+        if self.state == State['FT']:
+            return self.sql_h.add_publickey(public_key,client_id)
+
+        elif self.state == State['TF']:
+            return self.ram_h.add_publickey(public_key,client_id)
+
+        elif self.state == State['TT']:
+            self.sql_h.add_publickey(public_key,client_id)
+            self.ram_h.add_publickey(public_key,client_id)
+
 
 
 

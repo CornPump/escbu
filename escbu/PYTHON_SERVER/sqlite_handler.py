@@ -77,6 +77,9 @@ class SqlDbHandler:
         conn.commit()
         conn.close()
 
+    def add_publickey(self, public_key, client_id):
+        pass
+
 """
     def part_entry(self):
         conn = sqlite3.connect(self.db_name)

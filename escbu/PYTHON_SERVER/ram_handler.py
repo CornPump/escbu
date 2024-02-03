@@ -7,6 +7,9 @@ class RamHandler:
         self.clients = {}
         self.files = {}
 
+    def __str__(self):
+        return f"clients: {self.clients}\n files:{self.files}"
+
 
     def set_clients_dict(self,rows_lst):
 
@@ -33,5 +36,8 @@ class RamHandler:
 
     def add_new_client(self, id, name, publickey, lastseen, aeskey):
         inner_dict = {clients_keys[1]: name, clients_keys[2]: publickey,
-                      clients_keys[3]: lastseen, clients_keys[3]: aeskey}
+                      clients_keys[3]: lastseen, clients_keys[4]: aeskey}
         self.clients[id] = inner_dict
+
+    def add_publickey(self, public_key, client_id):
+        pass
