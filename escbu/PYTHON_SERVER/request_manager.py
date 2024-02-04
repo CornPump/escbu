@@ -4,6 +4,10 @@ import helpers_request
 import helpers_response
 import data_handler
 import uuid
+import aes
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+
 class RequestManager:
 
     def __init__(self, connection, data_handler):
@@ -43,6 +47,15 @@ class RequestManager:
 
         elif response_code == helpers_response.Response['REGISTER_S']:
             seq_ret_code = self.start_registration_success_sequence()
+
+            if response_code == helpers_response.Response["REGISTER_AES_KEY"]:
+                print("FINALE")
+                pass
+
+            elif seq_ret_code == helpers_response.Response['ERROR_F'] or\
+                    seq_ret_code == helpers_response.Response['INTERNAL_F']:
+                self.send_general_error_response()
+
             if seq_ret_code == helpers_response.Response['ERROR_F']:
                 self.send_general_error_response()
 
@@ -87,13 +100,10 @@ class RequestManager:
 
     def start_registration_success_sequence(self):
         # add client to database and send register success Response
-        print_uid = uuid.uuid4()
-        new_uuid = print_uid.bytes
-        print(new_uuid)
-        print(print_uid)
+        new_uuid = uuid.uuid4().bytes
+
         self.dth.add_new_client(id=new_uuid, name=self.get_latest_req().name)
 
-        print(self.dth.ram_h)
         print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}")
         resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], new_uuid)
         resh.send_request()
@@ -110,20 +120,37 @@ class RequestManager:
         payload = self.conn.recv(helpers_request.CLIENT_NAME_SIZE + helpers_request.CLIENT_PUBLIC_KEY_SIZE)
         rh.name = payload[:helpers_request.CLIENT_NAME_SIZE].decode('utf-8').rstrip('\0')
         adder += helpers_request.CLIENT_NAME_SIZE
-        print('name=', rh.name)
+
         rsa_key = payload[adder: adder + helpers_request.CLIENT_PUBLIC_KEY_SIZE]
-        print('key=', rsa_key)
-        print(len(rsa_key))
 
         if len(rsa_key) != helpers_request.CLIENT_PUBLIC_KEY_SIZE:
             return helpers_response.Response['ERROR_F']
+        try:
+            self.dth.add_publickey(public_key=rsa_key, client_id=rh.client_id)
 
-        self.dth.add_publickey(public_key=rsa_key, client_id=rh.client_id)
-        # receive request with public key
-        # generate AES key
-        # create entry in table for client (SQLITE & RAM)
-        # encrpyt AES key with public key
-        # send to client
+            print(f"Generating aes_key for client:{rh.client_id} ")
+            aes_key = aes.generate_aes_key()
+            self.dth.add_aeskey(aes_key=aes_key, client_id=rh.client_id)
+
+            print(f"encrypting aes_key for client:{rh.client_id} using his public_key")
+
+            # Encrypt the AES key using RSA public key
+            imported_public_key = RSA.import_key(self.dth.fetch_public_rsa(client_id=new_uuid))
+            cipher_rsa = PKCS1_OAEP.new(imported_public_key)
+            encrypted_aes_key = cipher_rsa.encrypt(aes_key)
+
+            resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_AES_KEY'],
+                                                    new_uuid + encrypted_aes_key)
+
+            print(f'Sending Response {helpers_response.Response["REGISTER_AES_KEY"]}')
+            resh.send_request()
+
+            return helpers_response.Response["REGISTER_AES_KEY"]
+
+        except Exception as e:
+            print(e)
+            print(f'Responding with general error to client:{rh.client_id} ')
+            return helpers_response.Response["INTERNAL_F"]
 
 
 

@@ -13,7 +13,7 @@ class ResponseHandler():
 
     def __str__(self):
         return f'( opcode={self.opcode} payload_size={self.payload_size}' \
-               f',payload_size={self.payload_size}, server_version={self.server_version})'
+               f',payloade={self.payload}, server_version={self.server_version})'
 
     def send_request(self):
 
@@ -28,7 +28,7 @@ class ResponseHandler():
             header += self.payload
 
 
-        print('Header= ',header)
+        print('Resh:Header= ',header)
 
         try:
             self.conn.sendall(header)

@@ -39,5 +39,13 @@ class RamHandler:
                       clients_keys[3]: lastseen, clients_keys[4]: aeskey}
         self.clients[id] = inner_dict
 
-    def add_publickey(self, public_key, client_id):
-        pass
+    def add_publickey(self, public_key, client_id, lastseen):
+        self.clients[client_id]['Public_key'] = public_key
+        self.clients[client_id]['Last_seen'] = lastseen
+
+    def add_aeskey(self, aes_key, client_id, lastseen):
+        self.clients[client_id]['AES_key'] = aes_key
+        self.clients[client_id]['Last_seen'] = lastseen
+
+    def fetch_public_rsa(self, client_id):
+        return self.clients[client_id]['Public_key']

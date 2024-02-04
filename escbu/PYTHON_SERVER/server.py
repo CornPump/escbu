@@ -1,9 +1,9 @@
 import socket
 import os
 import operation
-import uuid
 import request_manager
 import data_handler
+import time
 
 HOST = '127.0.0.1'
 PORT = 1256
@@ -40,7 +40,6 @@ if __name__ == "__main__":
 
             rm.start_request_sequence()
             #print(rm)
-            while(True):
-                pass
+
 
 

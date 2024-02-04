@@ -77,18 +77,44 @@ class SqlDbHandler:
         conn.commit()
         conn.close()
 
-    def add_publickey(self, public_key, client_id):
-        pass
-
-"""
-    def part_entry(self):
+    def add_publickey(self, public_key, client_id, lastseen):
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO files (ID, Filename)
-            VALUES (?, ?)
-        ''', (b'sheeeeeeeeeeeesh', 'thatsomecrazypath'))
+
+        query = '''
+            UPDATE clients
+            SET Public_key = ?,
+                Last_seen = ?
+            WHERE ID = ?
+        '''
+        cursor.execute(query, (public_key, lastseen, client_id))
+
         conn.commit()
-        cursor.close()
         conn.close()
-"""
+
+    def add_aeskey(self, aes_key, client_id, lastseen):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = '''
+                    UPDATE clients
+                    SET AES_key = ?,
+                        Last_seen = ?
+                    WHERE ID = ?
+                '''
+        cursor.execute(query, (aes_key, lastseen, client_id))
+
+        conn.commit()
+        conn.close()
+
+    def fetch_public_rsa(self, client_id):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = 'SELECT Public_key FROM clients WHERE ID = ?'
+        cursor.execute(query, (client_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        return result

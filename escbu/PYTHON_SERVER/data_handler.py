@@ -71,15 +71,45 @@ class DataHandler:
             self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
     def add_publickey(self,public_key,client_id):
+        lastseen = datetime.datetime.now()
         if self.state == State['FT']:
-            return self.sql_h.add_publickey(public_key,client_id)
+            return self.sql_h.add_publickey(public_key,client_id,lastseen)
 
         elif self.state == State['TF']:
-            return self.ram_h.add_publickey(public_key,client_id)
+            return self.ram_h.add_publickey(public_key,client_id,lastseen)
 
         elif self.state == State['TT']:
-            self.sql_h.add_publickey(public_key,client_id)
-            self.ram_h.add_publickey(public_key,client_id)
+            self.sql_h.add_publickey(public_key,client_id,lastseen)
+            self.ram_h.add_publickey(public_key,client_id,lastseen)
+
+    def add_aeskey(self, aes_key,client_id):
+        lastseen = datetime.datetime.now()
+
+        if self.state == State['FT']:
+            return self.sql_h.add_aeskey(aes_key, client_id, lastseen)
+
+        elif self.state == State['TF']:
+            return self.ram_h.add_aeskey(aes_key, client_id, lastseen)
+
+        elif self.state == State['TT']:
+            self.sql_h.add_aeskey(aes_key, client_id, lastseen)
+            self.ram_h.add_aeskey(aes_key, client_id, lastseen)
+
+    def fetch_public_rsa(self,client_id):
+        if self.state == State['FT']:
+            return self.sql_h.fetch_public_rsa(client_id)
+
+        elif self.state == State['TF']:
+            return self.ram_h.fetch_public_rsa(client_id)
+
+        elif self.state == State['TT']:
+            sql_pub_key = self.sql_h.fetch_public_rsa(client_id)
+            ram_pub_key = self.ram_h.fetch_public_rsa(client_id)
+
+            if (ram_pub_key != ram_pub_key):
+                print(f'[WARNING] Missmatch in fetch_public_rsa() sql_h return:{sql_pub_key}\n ram_h: return{ram_pub_key}')
+
+            return ram_pub_key
 
 
 
