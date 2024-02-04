@@ -7,10 +7,12 @@
 #include <boost/asio.hpp>
 #include "helpers_request.h"
 #include "response_handler.h"
+#include "base_64_wrapper.h"
+#include "rsa_wrapper.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-
+#include "aes_wrapper.h"
 
 Client::Client() {
 	
@@ -77,6 +79,12 @@ std::string Client::get_name() {
     // Close the file
     infile.close();
 
+    if (line.length() >= NAME_MAX_LENGTH - 1) {
+
+        std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
+        exit(1);
+    }
+
     return line;
     
 }
@@ -117,6 +125,12 @@ boost::asio::ip::tcp::socket& Client::get_socket() {
     return *sock;
 }
 
+void Client::set_aes_wrapper(AESWrapper* aes_wrapper) {
+
+    this->aes_ptr = aes_wrapper;
+
+}
+
 std::vector<uint8_t> Client::create_basic_header(RequestType opcode) const {
 
     std::vector<uint8_t> message;
@@ -133,9 +147,9 @@ std::vector<uint8_t> Client::create_basic_header(RequestType opcode) const {
 
 }
 
-std::vector<uint8_t> Client::append_fixed_size_string_to_message(std::vector<uint8_t>& message, std::string& str) {
+std::vector<uint8_t> Client::append_name_to_message(std::vector<uint8_t>& message, std::string& str) {
 
-    if (str.length() >= NAME_MAX_LENGTH - 1) {
+    if (str.length() > NAME_MAX_LENGTH && str.back() != '\0') {
 
         std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
         std::vector<uint8_t> empty;
@@ -160,8 +174,7 @@ std::vector<uint8_t> Client::append_fixed_size_string_to_message(std::vector<uin
 ResponseType Client::send_request(RequestType opcode) {
 
     std::vector<uint8_t> tmp_msg = create_basic_header(opcode);
-    //std::string nname = this->name;
-    std::vector<uint8_t> message = append_fixed_size_string_to_message(tmp_msg, this->name);
+    std::vector<uint8_t> message = append_name_to_message(tmp_msg, this->name);
     if (message.empty()) {return ResponseType::INTERNAL_F;}
     
     
@@ -185,7 +198,7 @@ ResponseType Client::send_request(RequestType opcode) {
             this->print();
 
             //generate RSA pair , create me.info & priv.key files , send request 1026
-            //this->start_registration_second_phase();
+            ResponseType res = this->start_registration_second_phase();
             
 
         }
@@ -279,8 +292,75 @@ std::string Client::convert_uuid_to_string(std::vector<uint8_t> vec) {
     return uuid_s;
 }
 
-/*void Client::start_registration_second_phase() {
+ResponseType Client::start_registration_second_phase() {
 
-    
+    // Create RSA key pair
+    std::cout << "Creating RSA key pair.." << std::endl;
+    RSAPrivateWrapper privateWrapper;
+    RSAPublicWrapper publicWrapper(privateWrapper.getPublicKey());
 
-}*/
+    // Get the public and private keys
+    std::string publicKey = publicWrapper.getPublicKey();
+    std::string privateKey = privateWrapper.getPrivateKey();
+
+    std::string codedpublickey = Base64Wrapper::encode(publicKey);
+
+    // Create me.info and privkey files
+    create_me_file(this->name, convert_uuid_to_string(this->client_id), privateKey);
+    create_privkey_file(privateKey);
+
+    // send public key request
+    std::vector<uint8_t> message = create_basic_header(RequestType::SEND_PUBLIC_KEY);
+
+    ULONG32 payload_size = static_cast<ULONG32>(NAME_MAX_LENGTH + PUBLIC_KEY_SIZE);
+    payload_size = htonl(payload_size);
+    message.insert(message.end(), reinterpret_cast<uint8_t*>(&payload_size),
+        reinterpret_cast<uint8_t*>(&payload_size) + sizeof(uint32_t));
+
+    message.insert(message.end(), this->name.begin(), this->name.end());
+
+    if (message.empty()) { return ResponseType::INTERNAL_F; }
+    message.insert(message.end(), publicKey.begin(), publicKey.end());
+
+    boost::asio::write(this->get_socket(), boost::asio::buffer(message));
+    std::cout << "Sent Request " << std::dec <<static_cast<int>(RequestType::SEND_PUBLIC_KEY) << ":REGISTER" << std::endl;
+
+    // receive response
+    ResponseHandler resh;
+    resh.read_minimum_header(this->get_socket());
+    resh.print();
+    ResponseType res = resh.get_opcode();
+
+    // if success response receive AES key from server decrypt it using private RSA key
+    if (res == ResponseType::REGISTER_AES_KEY) {
+        
+        std::cout << "Received AES_key, decrypting it using private_key" << std::endl;
+        std::vector<uint8_t> payload = resh.read_payload(this->get_socket());
+        std::vector<uint8_t> aes_key = { payload.begin() + DEFAULT_CLIENT_ID_SIZE, payload.end() };
+
+      // Convert to std::string
+        std::string str_aes_key(aes_key.begin(), aes_key.end());
+        const unsigned char* aes_key_ = reinterpret_cast<const unsigned char*>(str_aes_key.data());
+
+        /*
+        std::cout << "std::string: " << str_aes_key << std::endl;
+        std::cout << "As const char*: " << aes_key_ << std::endl;
+        
+        printHex(aes_key);
+
+        std::string decrypted_aes_key = privateWrapper.decrypt(str_aes_key);
+        */
+        // Create an AESWrapper with the provided key
+        AESWrapper aes(aes_key_, AESWrapper::DEFAULT_KEYLENGTH);
+        
+
+        // set aes_wrapper param on client
+        this->set_aes_wrapper(&aes);
+
+
+        return ResponseType::REGISTER_AES_KEY;
+    }
+
+    else { return ResponseType::ERROR_F; }
+
+}

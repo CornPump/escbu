@@ -28,13 +28,8 @@ ResponseType ResponseHandler::read_minimum_header(boost::asio::ip::tcp::socket& 
     catch (const boost::system::system_error& e) {
         std::cerr << "Boost.Asio read error: " << e.what() << std::endl;
     }
-    /*catch (...) {
-        std::cout << "Error in reading minimum header" << std::endl;
-        return ResponseType::INTERNAL_F;
 
-    }*/
     // if no error fetch minimum header
-    
     std::memcpy(&this->s_version, data, sizeof(uint8_t));
     std::memcpy(&this->opcode, data + sizeof(uint8_t), sizeof(uint16_t));
     this->opcode = static_cast<ResponseType>(htons(static_cast<uint16_t>(this->opcode)));

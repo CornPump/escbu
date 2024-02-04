@@ -7,6 +7,7 @@
 // Max LENGTHS FOR VARIOUS THINGS
 const int MESSAGE_MAX_LENGTH = 1024;
 const size_t NAME_MAX_LENGTH = 255;
+const size_t PUBLIC_KEY_SIZE = 160;
 
 // Basic and minimal header's params for request, this table represents their size, -1 = unlimited
 const int DEFAULT_CLIENT_ID_SIZE = 16;

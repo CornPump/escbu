@@ -20,6 +20,7 @@ private:
 
 	RSAPublicWrapper(const RSAPublicWrapper& rsapublic);
 	RSAPublicWrapper& operator=(const RSAPublicWrapper& rsapublic);
+	
 public:
 
 	RSAPublicWrapper(const char* key, unsigned int length);

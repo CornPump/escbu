@@ -366,3 +366,6 @@ PYTHON_SERVER\backup_server
 
 /escbu/PYTHON_SERVER/test.py
 /escbu/PYTHON_SERVER/defensive.db
+
+escbu/me.info
+escbu/priv.key

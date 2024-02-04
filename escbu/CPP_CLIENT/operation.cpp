@@ -4,10 +4,13 @@
 #include <boost/asio.hpp>
 #include <filesystem>
 #include "helpers_request.h"
+#include "base_64_wrapper.h"
 
 
 // Default transfer.info file ; file that represent the info about the client
 extern const std::string INFO_FILE = "transfer.info";
+extern const std::string ME_FILE = "me.info";
+extern const std::string PRIVATE_KEY_FILE = "priv.key";
 extern const std::string DEFAULT_HOST = "127.0.0.1";
 extern const int DEFAULT_PORT = 1234;
 extern const std::string DEFAULT_CLIENT_NAME = "It's always darkest before the dawn";
@@ -113,7 +116,63 @@ void create_info_file(const std::string& file_name, const std::string& host, int
     }
 }
 
+void create_me_file(const std::string& name, const std::string& uuid, const std::string& privkey) {
+
+    std::filesystem::path full_path = std::filesystem::current_path() / ME_FILE;
+
+    std::ofstream infoFileStream(full_path);
+
+    if (infoFileStream.is_open()) {
+
+        infoFileStream << name << std::endl;
+        infoFileStream << uuid << std::endl;
+        infoFileStream << Base64Wrapper::encode(privkey) << std::endl;
+
+        std::cout << "Created " << ME_FILE << " file succefully" << std::endl;
+    }
+    else {
+        std::cout << "Unable to create file: " << ME_FILE << std::endl;
+    }
+
+}
+
+void create_privkey_file(const std::string& privkey) {
+
+    
+    std::filesystem::path full_path = std::filesystem::current_path() / PRIVATE_KEY_FILE;
+
+    std::ofstream infoFileStream(full_path);
+
+    if (infoFileStream.is_open()) {
+
+        infoFileStream << Base64Wrapper::encode(privkey) << std::endl;
+
+        std::cout << "Created " << PRIVATE_KEY_FILE << " file succefully" << std::endl;
+    }
+    else {
+        std::cout << "Unable to create file: " << PRIVATE_KEY_FILE << std::endl;
+    }
+}
+
+
 void clear(uint8_t message[], int length) {
     for (int i = 0; i < length; i++)
         message[i] = '\0';
+}
+
+void hexify(const unsigned char* buffer, unsigned int length)
+{
+    std::ios::fmtflags f(std::cout.flags());
+    std::cout << std::hex;
+    for (size_t i = 0; i < length; i++)
+        std::cout << std::setfill('0') << std::setw(2) << (0xFF & buffer[i]) << (((i + 1) % 16 == 0) ? "\n" : " ");
+    std::cout << std::endl;
+    std::cout.flags(f);
+}
+
+void printHex(const std::vector<uint8_t>& data) {
+    for (const auto& byte : data) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    }
+    std::cout << std::dec << std::endl;
 }

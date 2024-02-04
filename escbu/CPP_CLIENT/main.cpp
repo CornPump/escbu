@@ -11,6 +11,7 @@
 
 using boost::asio::ip::tcp;
 
+/*
 void hexify(const unsigned char* buffer, unsigned int length)
 {
 	std::ios::fmtflags f(std::cout.flags());
@@ -19,17 +20,18 @@ void hexify(const unsigned char* buffer, unsigned int length)
 		std::cout << std::setfill('0') << std::setw(2) << (0xFF & buffer[i]) << (((i + 1) % 16 == 0) ? "\n" : " ");
 	std::cout << std::endl;
 	std::cout.flags(f);
-}
+}*/
 
 
 int aes_example()
 {
 	std::cout << std::endl << std::endl << "----- AES EXAMPLE -----" << std::endl << std::endl;
 
-	std::string plaintext = "Once upon a time, a plain text dreamed to become a cipher";
+	std::string plaintext = "This is a test message with arbitrary length for AES encryption.";
 	std::cout << "Plain:" << std::endl << plaintext << std::endl;
 
-	// 1. Generate a key and initialize an AESWrapper. You can also create AESWrapper with default constructor which will automatically generates a random key.
+	// 1. Generate a key and initialize an AESWrapper. 
+	// You can also create AESWrapper with default constructor which will automatically generates a random key.
 	unsigned char key[AESWrapper::DEFAULT_KEYLENGTH];
 	AESWrapper aes(AESWrapper::GenerateKey(key, AESWrapper::DEFAULT_KEYLENGTH), AESWrapper::DEFAULT_KEYLENGTH);
 
@@ -117,6 +119,8 @@ void my_rsa_example()
 
 int main()
 {
+	//std::cout << "Sent Request " << static_cast<int>(RequestType::SEND_PUBLIC_KEY) << ":REGISTER" << std::endl;
+	//exit(1);
 	//aes_example();
 
 	//my_rsa_example();
