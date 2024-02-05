@@ -36,6 +36,9 @@
     <ClCompile Include="CPP_CLIENT\response_handler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPP_CLIENT\cksum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPP_CLIENT\operation.h">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CPP_CLIENT\response_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CPP_CLIENT\cksum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

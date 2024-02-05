@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClCompile Include="CPP_CLIENT\aes_wrapper.cpp" />
     <ClCompile Include="CPP_CLIENT\base_64_wrapper.cpp" />
+    <ClCompile Include="CPP_CLIENT\cksum.cpp" />
     <ClCompile Include="CPP_CLIENT\client.cpp" />
     <ClCompile Include="CPP_CLIENT\main.cpp" />
     <ClCompile Include="CPP_CLIENT\operation.cpp" />
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="CPP_CLIENT\aes_wrapper.h" />
     <ClInclude Include="CPP_CLIENT\base_64_wrapper.h" />
+    <ClInclude Include="CPP_CLIENT\cksum.h" />
     <ClInclude Include="CPP_CLIENT\client.h" />
     <ClInclude Include="CPP_CLIENT\helpers_request.h" />
     <ClInclude Include="CPP_CLIENT\helpers_response.h" />
