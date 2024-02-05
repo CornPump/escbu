@@ -33,7 +33,7 @@ def unpad(data):
     # Trim the zeros after the last non-zero byte
     unpadded_data = data[:last_nonzero_index + 1]
 
-    return unpadded_datag
+    return unpadded_data
 
 
 def encrypt_data(data, aes_key, iv):
