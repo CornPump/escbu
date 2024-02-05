@@ -5,6 +5,8 @@
 #include <filesystem>
 #include "helpers_request.h"
 #include "base_64_wrapper.h"
+#include "aes_wrapper.h"
+#include "aes.h"
 
 
 // Default transfer.info file ; file that represent the info about the client
@@ -14,9 +16,17 @@ extern const std::string PRIVATE_KEY_FILE = "priv.key";
 extern const std::string DEFAULT_HOST = "127.0.0.1";
 extern const int DEFAULT_PORT = 1234;
 extern const std::string DEFAULT_CLIENT_NAME = "It's always darkest before the dawn";
-extern const std::string DEFAULT_FILE_TO_TRANSFER = "test.txt";
+extern const std::string DEFAULT_FILE_TO_TRANSFER = "test";
 
-
+void hexify(const unsigned char* buffer, unsigned int length)
+{
+    std::ios::fmtflags f(std::cout.flags());
+    std::cout << std::hex;
+    for (size_t i = 0; i < length; i++)
+        std::cout << std::setfill('0') << std::setw(2) << (0xFF & buffer[i]) << (((i + 1) % 16 == 0) ? "\n" : " ");
+    std::cout << std::endl;
+    std::cout.flags(f);
+}
 
 long long get_file_size(const std::string& filename) {
     try {
@@ -35,6 +45,62 @@ long long get_file_size(const std::string& filename) {
         return -1;
     }
 }
+
+std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_wrapper) {
+
+
+    std::filesystem::path full_path = std::filesystem::current_path() / filename;
+
+    std::string add = filename + "_encrypted.txt";
+    std::filesystem::path output_file = std::filesystem::current_path() / add;
+
+    std::string empty;
+    std::cout << "file " << full_path.string() << " exist: " << std::filesystem::exists(full_path.string()) << std::endl;
+    try {
+        std::ifstream infile(full_path.string(), std::ios::binary);
+        if (!infile.is_open()) {
+            std::cerr << "Error opening file: " << filename << std::endl;
+            return empty;
+        }
+
+        // Send file content in chunks 
+        std::string buffer(1024,'\0');
+
+        while (infile.read(&buffer[0], 1024) || infile.gcount() > 0) {
+            buffer.resize(static_cast<size_t>(infile.gcount()));
+
+            std::cout << "bytesRead = " << infile.gcount() << std::endl;
+            std::cout << "buffer = " << buffer << std::endl;
+
+            std::string ciphertext = aes_wrapper->encrypt(buffer.c_str(), buffer.length());
+            std::cout << "ciphertext = " << ciphertext << std::endl;
+            hexify(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.length());
+            std::string decrypttext = aes_wrapper->decrypt(ciphertext.c_str(), ciphertext.length());
+            std::cout << "Decrypted:" << std::endl << decrypttext << std::endl;
+
+
+
+            std::ofstream outfile(output_file, std::ios::binary | std::ios::app);
+            if (!outfile.is_open()) {
+                std::cerr << "Error opening file for writing: " << filename << std::endl;
+
+                return empty;
+            }
+
+            outfile.write(ciphertext.data(), ciphertext.length());
+
+
+        }
+
+        std::cout << "File encrypted successfully: " << filename << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error encrypting file: " << e.what() << std::endl;
+    }
+
+    return output_file.string();
+}
+
 
 void send_file(const std::string& filename, boost::asio::ip::tcp::socket& socket, uint32_t size) {
     try {
@@ -98,7 +164,7 @@ bool check_file_exist(std::filesystem::path file_path) {
 
 void create_info_file(const std::string& file_name, const std::string& host, int port,
     const std::string& client_name, const std::string& file_to_transfer) {
-    
+
     std::filesystem::path full_path = std::filesystem::current_path() / file_name;
 
     std::ofstream infoFileStream(full_path);
@@ -138,7 +204,7 @@ void create_me_file(const std::string& name, const std::string& uuid, const std:
 
 void create_privkey_file(const std::string& privkey) {
 
-    
+
     std::filesystem::path full_path = std::filesystem::current_path() / PRIVATE_KEY_FILE;
 
     std::ofstream infoFileStream(full_path);
@@ -160,15 +226,6 @@ void clear(uint8_t message[], int length) {
         message[i] = '\0';
 }
 
-void hexify(const unsigned char* buffer, unsigned int length)
-{
-    std::ios::fmtflags f(std::cout.flags());
-    std::cout << std::hex;
-    for (size_t i = 0; i < length; i++)
-        std::cout << std::setfill('0') << std::setw(2) << (0xFF & buffer[i]) << (((i + 1) % 16 == 0) ? "\n" : " ");
-    std::cout << std::endl;
-    std::cout.flags(f);
-}
 
 void printHex(const std::vector<uint8_t>& data) {
     for (const auto& byte : data) {

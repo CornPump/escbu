@@ -3,9 +3,10 @@
 
 #include <boost/asio.hpp>
 #include <filesystem>
-
+#include "aes_wrapper.h"
 
 long long get_file_size(const std::string& filename);
+std::string get_transfer_file_name();
 void send_file(const std::string& filename, boost::asio::ip::tcp::socket& socket, uint32_t size);
 void receive_file(const std::string& filename, boost::asio::ip::tcp::socket& socket, uint32_t size);
 bool check_file_exist(std::filesystem::path file_path);
@@ -13,6 +14,7 @@ void create_info_file(const std::string& file_name, const std::string& host, int
 						const std::string& client_name, const std::string& file_to_transfer);
 void create_me_file(const std::string& name, const std::string& uuid, const std::string& privkey);
 void create_privkey_file(const std::string& privkey);
+std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_wrapper);
 void clear(uint8_t message[], int length);
 void hexify(const unsigned char* buffer, unsigned int length);
 void printHex(const std::vector<uint8_t>& data);
