@@ -20,25 +20,20 @@ def pad(data):
     # Calculate the number of bytes to pad
     padding_size = AES.block_size - (len(data) % AES.block_size)
 
-    # Pad the data using PKCS#7 scheme
-    padding = bytes([padding_size] * padding_size)
+    # Pad the data using zero padding scheme
+    padding = bytes([0] * padding_size)
     padded_data = data + padding
 
     return padded_data
 
-
 def unpad(data):
-    # Get the last byte which indicates the padding size
-    padding_size = data[-1]
+    # Find the index of the last non-zero byte, which indicates the end of the data
+    last_nonzero_index = max(i for i, byte in enumerate(data) if byte != 0)
 
-    # Verify that the padding is valid
-    if padding_size > AES.block_size or not all(x == padding_size for x in data[-padding_size:]):
-        raise ValueError("Invalid PKCS#7 padding")
+    # Trim the zeros after the last non-zero byte
+    unpadded_data = data[:last_nonzero_index + 1]
 
-    # Remove the padding
-    unpadded_data = data[:-padding_size]
-
-    return unpadded_data
+    return unpadded_datag
 
 
 def encrypt_data(data, aes_key, iv):
@@ -60,7 +55,6 @@ def decrypt_data(encrypted_data, aes_key, iv):
 
     # Decrypt the data
     decrypted_data = cipher.decrypt(encrypted_data)
-
     # Remove padding using PKCS#7 scheme
     unpadded_data = unpad(decrypted_data)
 
