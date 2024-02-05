@@ -13,6 +13,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include "aes_wrapper.h"
+#include "cksum.h"
 
 Client::Client() {
 	
@@ -45,6 +46,7 @@ Client::Client() {
 Client::~Client() {
 
     sock->close();
+    delete aes_ptr;
 
 }
 
@@ -120,6 +122,39 @@ std::tuple<std::string, std::string> Client::get_socket_params() {
     return tup;
 
 }
+
+std::string get_transfer_file_name() {
+
+    std::filesystem::path full_path = std::filesystem::current_path() / INFO_FILE;
+
+    std::ifstream infile(full_path.string());
+
+    std::string line;
+
+    if (!infile.is_open()) {
+        std::cout << "Unable to open the file" << std::endl;
+    }
+
+    // get name line
+    else {
+        std::getline(infile, line);
+        std::getline(infile, line);
+        std::getline(infile, line);
+    }
+
+    // Close the file
+    infile.close();
+
+    if (line.length() >= NAME_MAX_LENGTH - 1) {
+
+        std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
+        exit(1);
+    }
+
+    return line;
+
+}
+
 
 boost::asio::ip::tcp::socket& Client::get_socket() {
     return *sock;
@@ -198,8 +233,14 @@ ResponseType Client::send_request(RequestType opcode) {
             this->print();
 
             //generate RSA pair , create me.info & priv.key files , send request 1026
-            ResponseType res = this->start_registration_second_phase();
-            
+            ResponseType res2 = this->start_registration_second_phase();
+
+            if (res2 == ResponseType::REGISTER_AES_KEY) {
+
+                ResponseType res3 = this->send_file_sequence();
+
+            }
+            else { this->write_general_error_message(); }
 
         }
 
@@ -342,20 +383,18 @@ ResponseType Client::start_registration_second_phase() {
         std::string str_aes_key(aes_key.begin(), aes_key.end());
         const unsigned char* aes_key_ = reinterpret_cast<const unsigned char*>(str_aes_key.data());
 
-        /*
-        std::cout << "std::string: " << str_aes_key << std::endl;
-        std::cout << "As const char*: " << aes_key_ << std::endl;
-        
-        printHex(aes_key);
-
+        std::cout << "encrypted aes_key " << aes_key_ << "testing spaces" << std::endl;
+       
         std::string decrypted_aes_key = privateWrapper.decrypt(str_aes_key);
-        */
+        const unsigned char* aes_key_final = reinterpret_cast<const unsigned char*>(decrypted_aes_key.data());
+        std::cout << "aes_key_final " << aes_key_final << std::endl;
+
         // Create an AESWrapper with the provided key
-        AESWrapper aes(aes_key_, AESWrapper::DEFAULT_KEYLENGTH);
-        
+        AESWrapper* aes = new AESWrapper(aes_key_final, AESWrapper::DEFAULT_KEYLENGTH);
+        //AESWrapper aes(aes_key_final, AESWrapper::DEFAULT_KEYLENGTH);
 
         // set aes_wrapper param on client
-        this->set_aes_wrapper(&aes);
+        this->set_aes_wrapper(aes);
 
 
         return ResponseType::REGISTER_AES_KEY;
@@ -363,4 +402,28 @@ ResponseType Client::start_registration_second_phase() {
 
     else { return ResponseType::ERROR_F; }
 
+}
+
+ResponseType Client::send_file_sequence() {
+
+    std::vector<uint8_t> message = create_basic_header(RequestType::SEND_FILE);
+    
+    std::cout << "Creating encyrpted file.." << std::endl;    
+    std::string encrypted_file = create_encrypted_file(get_transfer_file_name(), this->aes_ptr);
+
+    
+    std::filesystem::path full_path = std::filesystem::current_path() / get_transfer_file_name();
+
+    std::string add = full_path.string() + "_encrypted.txt";
+    std::filesystem::path output_file = std::filesystem::current_path() / add;
+    std::cout << check_sum(output_file.string());
+
+
+
+
+
+
+
+
+    return ResponseType::ERROR_F;
 }
