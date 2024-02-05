@@ -14,6 +14,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include "aes_wrapper.h"
 #include "cksum.h"
+#include "cstdio"
 
 Client::Client() {
 	
@@ -414,12 +415,13 @@ ResponseType Client::send_file_sequence() {
     std::tuple<uint32_t, uint32_t> tup = check_sum(encrypted_file);
     uint32_t cksum = std::get<0>(tup);
     uint32_t enc_file_size = std::get<1>(tup);
+    std::cout << cksum << ',' << enc_file_size << std::endl;
 
 
 
 
 
-
+    std::remove(encrypted_file.c_str());
 
     return ResponseType::ERROR_F;
 }
