@@ -77,13 +77,14 @@ def memcrc(b):
 def cksum(fname):
     try:
         buffer = open(fname, 'rb').read()
-        return f"{memcrc(buffer)}\t{len(buffer)}\t{fname}"
+        return (memcrc(buffer),len(buffer))
+
     except IOError:
         print ("Unable to open input file", fname)
-        exit (-1)
+        return (0,0)
     except Exception as err:
         print ("Error processing the file", err)
-        exit (-1)
+        return (0,0)
 
 
 
