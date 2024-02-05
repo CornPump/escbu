@@ -411,13 +411,9 @@ ResponseType Client::send_file_sequence() {
     std::cout << "Creating encyrpted file.." << std::endl;    
     std::string encrypted_file = create_encrypted_file(get_transfer_file_name(), this->aes_ptr);
 
-    
-    std::filesystem::path full_path = std::filesystem::current_path() / get_transfer_file_name();
-
-    std::string add = full_path.string() + "_encrypted.txt";
-    std::filesystem::path output_file = std::filesystem::current_path() / add;
-    std::cout << check_sum(output_file.string());
-
+    std::tuple<uint32_t, uint32_t> tup = check_sum(encrypted_file);
+    uint32_t cksum = std::get<0>(tup);
+    uint32_t enc_file_size = std::get<1>(tup);
 
 
 
