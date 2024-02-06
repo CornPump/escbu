@@ -64,9 +64,9 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
         }
 
         // Send file content in chunks 
-        std::string buffer(1024,'\0');
+        std::string buffer(MESSAGE_MAX_LENGTH,'\0');
 
-        while (infile.read(&buffer[0], 1024) || infile.gcount() > 0) {
+        while (infile.read(&buffer[0], MESSAGE_MAX_LENGTH) || infile.gcount() > 0) {
             buffer.resize(static_cast<size_t>(infile.gcount()));
 
             std::cout << "bytesRead = " << infile.gcount() << std::endl;

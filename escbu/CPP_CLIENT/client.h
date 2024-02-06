@@ -8,6 +8,7 @@
 #include "helpers_response.h"
 #include <filesystem>
 #include "aes_wrapper.h"
+#include "cksum.h"
 
 class Client {
 
@@ -24,6 +25,7 @@ class Client {
 	std::vector<uint8_t> append_name_to_message(std::vector<uint8_t>& message, std::string& str);
 	ResponseType start_registration_second_phase();
 	void set_aes_wrapper(AESWrapper* aes_wrapper);
+	ResponseType send_file_sequence();
 	
 
 public:

@@ -464,7 +464,7 @@ unsigned long memcrc(char* b, size_t n) {
 
 }
 
-std::string check_sum(std::string fname) {
+std::tuple<unsigned long, unsigned long> check_sum(std::string fname) {
     if (std::filesystem::exists(fname)) {
         std::filesystem::path fpath = fname;
         std::ifstream f1(fname.c_str(), std::ios::binary);
@@ -473,12 +473,14 @@ std::string check_sum(std::string fname) {
         char* b = new char[size];
         f1.seekg(0, std::ios::beg);
         f1.read(b, size);
-        std::cout << "tellg returns" << f1.tellg() << std::endl;
 
-        return std::to_string(memcrc(b, size)) + '\t' + std::to_string(size) + '\t' + fname;
+        std::tuple <unsigned long, unsigned long> to_ret(memcrc(b, size),static_cast<unsigned long>(size));
+
+        return to_ret;
     }
     else {
         std::cerr << "Cannot open input file " << fname << std::endl;
-        return "";
+        std::tuple <unsigned long, unsigned long> to_ret(0, 0);
+        return to_ret;
     }
 }
