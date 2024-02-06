@@ -39,6 +39,8 @@ if __name__ == "__main__":
             rm = request_manager.RequestManager(conn,dth)
 
             rm.start_request_sequence()
+            fff = r"C:\Users\Fisher\PycharmProjects\escbu\escbu\escbu\PYTHON_SERVER\defensive.db"
+            #os.remove(fff)
             #print(rm)
 
 

@@ -28,6 +28,7 @@ def pad(data):
 
 def unpad(data):
     # Find the index of the last non-zero byte, which indicates the end of the data
+    print(data)
     last_nonzero_index = max(i for i, byte in enumerate(data) if byte != 0)
 
     # Trim the zeros after the last non-zero byte

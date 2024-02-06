@@ -107,6 +107,20 @@ class SqlDbHandler:
         conn.commit()
         conn.close()
 
+    def update_last_seen(self,client_id,lastseen):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = '''
+                            UPDATE clients
+                            SET Last_seen = ?
+                            WHERE ID = ?
+                        '''
+        cursor.execute(query, (lastseen, client_id))
+
+        conn.commit()
+        conn.close()
+
     def fetch_public_rsa(self, client_id):
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
@@ -118,3 +132,29 @@ class SqlDbHandler:
         conn.close()
 
         return result
+
+    def fetch_aes_key(self, client_id):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = 'SELECT AES_key FROM clients WHERE ID = ?'
+        cursor.execute(query, (client_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        return result[0]
+
+    def add_new_file(self, client_id, file_name, client_dir_relative_path):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        columns = [files_keys[0],files_keys[1],files_keys[2],files_keys[3]]
+        sql_query = f'''
+            INSERT INTO files ({', '.join(columns)})
+            VALUES (?, ?, ?, ?)
+        '''
+        cursor.execute(sql_query, (client_id, file_name, client_dir_relative_path, False))
+
+        conn.commit()
+        conn.close()

@@ -1,4 +1,5 @@
-from data_helpers import clients_keys,files_keys
+from data_helpers import clients_keys, files_keys
+
 
 class RamHandler:
 
@@ -10,8 +11,7 @@ class RamHandler:
     def __str__(self):
         return f"clients: {self.clients}\n files:{self.files}"
 
-
-    def set_clients_dict(self,rows_lst):
+    def set_clients_dict(self, rows_lst):
 
         if rows_lst:
 
@@ -20,7 +20,7 @@ class RamHandler:
                               clients_keys[3]: row[3], clients_keys[3]: row[4]}
                 self.clients[row[0]] = inner_dict
 
-    def set_files_dict(self,rows_lst):
+    def set_files_dict(self, rows_lst):
         if rows_lst:
 
             for row in rows_lst:
@@ -49,3 +49,15 @@ class RamHandler:
 
     def fetch_public_rsa(self, client_id):
         return self.clients[client_id]['Public_key']
+
+    def fetch_aes_key(self, client_id):
+        return self.clients[client_id]['AES_key']
+    def update_last_seen(self, client_id, lastseen):
+        self.clients[client_id]['Last_seen'] = lastseen
+
+    def add_new_file(self, client_id, file_name, client_dir_relative_path):
+        inner_dict = {files_keys[1]: file_name, files_keys[2]: client_dir_relative_path,
+                      files_keys[3]: False}
+        self.files[client_id] = inner_dict
+
+

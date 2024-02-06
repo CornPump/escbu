@@ -111,6 +111,49 @@ class DataHandler:
 
             return ram_pub_key
 
+    def fetch_aes_key(self,client_id):
+        if self.state == State['FT']:
+            return self.sql_h.fetch_aes_key(client_id)
+
+        elif self.state == State['TF']:
+            return self.ram_h.fetch_aes_key(client_id)
+
+        elif self.state == State['TT']:
+            sql_aes_key = self.sql_h.fetch_aes_key(client_id)
+            ram_aes_key = self.ram_h.fetch_aes_key(client_id)
+
+            if (sql_aes_key != ram_aes_key):
+                print(f'[WARNING] Missmatch in fetch_public_rsa() sql_h return:{sql_aes_key}\n ram_h: return{ram_aes_key}')
+
+            return ram_aes_key
+
+
+    def update_last_seen(self,client_id):
+        lastseen = datetime.datetime.now()
+        if self.state == State['FT']:
+            return self.sql_h.update_last_seen(client_id, lastseen)
+
+        elif self.state == State['TF']:
+            return self.ram_h.update_last_seen(client_id, lastseen)
+
+        elif self.state == State['TT']:
+            self.sql_h.update_last_seen(client_id, lastseen)
+            self.ram_h.update_last_seen(client_id, lastseen)
+
+
+    def add_new_file(self,client_id, file_name, client_dir_relative_path):
+        if self.state == State['FT']:
+            return self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)
+
+        elif self.state == State['TF']:
+            return self.add_new_file(client_id, file_name, client_dir_relative_path)
+
+        elif self.state == State['TT']:
+            self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)
+            self.ram_h.add_new_file(client_id, file_name, client_dir_relative_path)
+
+
+
 
 
 

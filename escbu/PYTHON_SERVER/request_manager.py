@@ -2,11 +2,12 @@ import request_handler
 import response_handler
 import helpers_request
 import helpers_response
-import data_handler
+import operation
 import uuid
 import aes
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
+import os
 
 class RequestManager:
 
@@ -48,16 +49,17 @@ class RequestManager:
         elif response_code == helpers_response.Response['REGISTER_S']:
             seq_ret_code = self.start_registration_success_sequence()
 
-            if response_code == helpers_response.Response["REGISTER_AES_KEY"]:
-                print("FINALE")
-                pass
+            if seq_ret_code == helpers_response.Response["REGISTER_AES_KEY"]:
+                self.start_receive_file_sequence()
 
-            elif seq_ret_code == helpers_response.Response['ERROR_F'] or\
+            elif seq_ret_code == helpers_response.Response['ERROR_F'] or \
                     seq_ret_code == helpers_response.Response['INTERNAL_F']:
                 self.send_general_error_response()
 
-            if seq_ret_code == helpers_response.Response['ERROR_F']:
-                self.send_general_error_response()
+
+
+
+
 
     def get_latest_req(self):
         return self.request_lst[self.num_requests - 1]
@@ -149,8 +151,58 @@ class RequestManager:
 
         except Exception as e:
             print(e)
-            print(f'Responding with general error to client:{rh.client_id} ')
+            print(f'Responding with general error to client:{rh.client_id} '
+                  f'but got helpers_response.Response["INTERNAL_F"]:Internal_error')
             return helpers_response.Response["INTERNAL_F"]
+
+
+    def start_receive_file_sequence(self):
+        # create RequestHandler instance
+        rh = request_handler.RequestHandler(self.conn)
+        # read minimum header into it
+        rh.read_minimum_header()
+        # append to request_manager
+        self.append(rh)
+        none_file_payload_size = helpers_request.DEFAULT_CONTENT_SIZE + helpers_request.DEFAULT_ORG_FILE_SIZE +\
+                        helpers_request.DEFAULT_PACKET_NUMBER_SIZE + helpers_request.DEFAULT_TOTAL_PACKET_SIZE +\
+                        + helpers_request.CLIENT_FILE_NAME_SIZE
+
+        payload = self.conn.recv(none_file_payload_size)
+
+        adder = 0
+        enc_file_size = rh.convert_from_little_endian(payload[:helpers_request.DEFAULT_CONTENT_SIZE],
+                                                        helpers_request.DEFAULT_CONTENT_SIZE)
+        adder += helpers_request.DEFAULT_CONTENT_SIZE
+        orig_file_size = rh.convert_from_little_endian(payload[adder: adder + helpers_request.DEFAULT_ORG_FILE_SIZE],
+                                                       helpers_request.DEFAULT_ORG_FILE_SIZE)
+        adder += helpers_request.DEFAULT_ORG_FILE_SIZE
+        packet_number = rh.convert_from_little_endian(payload[adder: adder + helpers_request.DEFAULT_PACKET_NUMBER_SIZE],
+                                                      helpers_request.DEFAULT_PACKET_NUMBER_SIZE)
+        adder += helpers_request.DEFAULT_PACKET_NUMBER_SIZE
+        total_packets = rh.convert_from_little_endian(payload[adder: adder + helpers_request.DEFAULT_TOTAL_PACKET_SIZE],
+                                                      helpers_request.DEFAULT_TOTAL_PACKET_SIZE)
+        adder += helpers_request.DEFAULT_TOTAL_PACKET_SIZE
+        file_name = payload[adder: adder + helpers_request.CLIENT_FILE_NAME_SIZE].decode('utf-8').rstrip('\0')
+
+        print(f'enc_file_size:{enc_file_size},orig_file_size:{orig_file_size},'
+              f'packet_number:{packet_number},total_packets:{total_packets},\nfile_name:{file_name}')
+
+        self.dth.update_last_seen(rh.client_id)
+
+        client_dir = operation.create_user_directory(rh.client_id)
+
+        client_dir_relative_path = os.path.join(operation.BACK_UP_DIR_NAME,os.path.basename(client_dir))
+
+        self.dth.add_new_file(rh.client_id, file_name, client_dir_relative_path)
+
+        operation.receive_file2(packet_number,total_packets,
+                                rh.payload_size - none_file_payload_size,
+                                os.path.join(client_dir_relative_path, file_name),
+                                self.dth.fetch_aes_key(rh.client_id), self)
+
+
+
+
 
 
 
