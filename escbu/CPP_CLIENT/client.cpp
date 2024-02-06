@@ -383,16 +383,12 @@ ResponseType Client::start_registration_second_phase() {
       // Convert to std::string
         std::string str_aes_key(aes_key.begin(), aes_key.end());
         const unsigned char* aes_key_ = reinterpret_cast<const unsigned char*>(str_aes_key.data());
-
-        std::cout << "encrypted aes_key " << aes_key_ << "testing spaces" << std::endl;
        
         std::string decrypted_aes_key = privateWrapper.decrypt(str_aes_key);
         const unsigned char* aes_key_final = reinterpret_cast<const unsigned char*>(decrypted_aes_key.data());
-        std::cout << "aes_key_final " << aes_key_final << std::endl;
 
         // Create an AESWrapper with the provided key
         AESWrapper* aes = new AESWrapper(aes_key_final, AESWrapper::DEFAULT_KEYLENGTH);
-        //AESWrapper aes(aes_key_final, AESWrapper::DEFAULT_KEYLENGTH);
 
         // set aes_wrapper param on client
         this->set_aes_wrapper(aes);
@@ -406,18 +402,90 @@ ResponseType Client::start_registration_second_phase() {
 }
 
 ResponseType Client::send_file_sequence() {
-
-    std::vector<uint8_t> message = create_basic_header(RequestType::SEND_FILE);
     
     std::cout << "Creating encyrpted file.." << std::endl;    
     std::string encrypted_file = create_encrypted_file(get_transfer_file_name(), this->aes_ptr);
 
-    std::tuple<uint32_t, uint32_t> tup = check_sum(encrypted_file);
+    std::tuple<uint32_t, uint32_t> tup = check_sum(get_transfer_file_name());
     uint32_t cksum = std::get<0>(tup);
-    uint32_t enc_file_size = std::get<1>(tup);
-    std::cout << cksum << ',' << enc_file_size << std::endl;
+    uint32_t orig_file_size = std::get<1>(tup);
+    std::cout << "check_sum_original:" << cksum << std::endl;
+    std::tuple<uint32_t, uint32_t> tup2 = check_sum(encrypted_file);
+    uint32_t cksum_enc = std::get<0>(tup2);
+    uint32_t enc_file_size = std::get<1>(tup2);
+    std::cout << "check_sum_encrypted:" << cksum_enc << std::endl;
 
 
+    std::string padded_original_file_name = get_transfer_file_name();
+    padded_original_file_name.resize(NAME_MAX_LENGTH, '\0');
+
+    int header_size = DEFAULT_CLIENT_ID_SIZE + DEFAULT_CLIENT_VERSION_SIZE + DEFAULT_CLIENT_CODE_SIZE +
+        DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE + DEFAULT_CONTENT_SIZE + DEFAULT_ORG_FILE_SIZE +
+        DEFAULT_PACKET_NUMBER_SIZE + DEFAULT_TOTAL_PACKET_SIZE + NAME_MAX_LENGTH;
+
+    uint16_t number_of_packets = std::ceil(enc_file_size / (static_cast<float>(header_size) + MESSAGE_MAX_LENGTH));
+
+    try {
+        std::ifstream infile(encrypted_file, std::ios::binary);
+        if (!infile.is_open()) {
+            std::cerr << "Error opening file: " << encrypted_file << std::endl;
+            return ResponseType::INTERNAL_F;
+        }
+
+        // Send file content in chunks 
+        uint16_t cur_packet_num = 1;
+        std::string buffer(MESSAGE_MAX_LENGTH, '\0');
+
+        while (infile.read(&buffer[0], MESSAGE_MAX_LENGTH) || infile.gcount() > 0) {
+            buffer.resize(static_cast<size_t>(infile.gcount()));
+
+            // creating the Request header
+            std::vector<uint8_t> message = create_basic_header(RequestType::SEND_FILE);
+
+            uint32_t payload_size = header_size + static_cast<size_t>(infile.gcount()) - DEFAULT_CLIENT_ID_SIZE
+                - DEFAULT_CLIENT_VERSION_SIZE - DEFAULT_CLIENT_CODE_SIZE;
+
+            std::cout << "payload_size:" << payload_size << std::endl;
+            payload_size = htonl(payload_size);
+            message.insert(message.end(), reinterpret_cast<uint8_t*>(&payload_size),
+                reinterpret_cast<uint8_t*>(&payload_size) + sizeof(uint32_t));
+            
+            std::cout << "encrypted_file_size:" << enc_file_size << std::endl;
+            enc_file_size = htonl(enc_file_size);
+            message.insert(message.end(), reinterpret_cast<uint8_t*>(&enc_file_size),
+                reinterpret_cast<uint8_t*>(&enc_file_size) + sizeof(uint32_t));
+
+            std::cout << "orig_file_size:" << orig_file_size << std::endl;
+            orig_file_size = htonl(orig_file_size);
+            message.insert(message.end(), reinterpret_cast<uint8_t*>(&orig_file_size),
+                reinterpret_cast<uint8_t*>(&orig_file_size) + sizeof(uint32_t));
+            
+            std::cout << "cur_packet_num:" << cur_packet_num << std::endl;
+            cur_packet_num = htons(cur_packet_num);
+            message.insert(message.end(), reinterpret_cast<uint8_t*>(&cur_packet_num),
+                reinterpret_cast<uint8_t*>(&cur_packet_num) + sizeof(uint16_t));
+            
+            std::cout << "number_of_packets:" << number_of_packets << std::endl;
+            number_of_packets = htons(number_of_packets);
+            message.insert(message.end(), reinterpret_cast<uint8_t*>(&number_of_packets),
+                reinterpret_cast<uint8_t*>(&number_of_packets) + sizeof(uint16_t));
+            
+
+            message.insert(message.end(), padded_original_file_name.begin(), padded_original_file_name.end());
+            std::cout << "padded_original_file_name:" << padded_original_file_name << std::endl;
+
+
+            boost::asio::write(this->get_socket(), boost::asio::buffer(message));
+            std::cout << "Sent Request " << static_cast<int>(RequestType::SEND_FILE) << ":SEND_FILE" << std::endl;
+            cur_packet_num++;
+            send_file(encrypted_file, this->get_socket(), enc_file_size);
+        }
+
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error opening file: " << e.what() << std::endl;
+        return ResponseType::INTERNAL_F;
+    }
 
 
 

@@ -16,6 +16,12 @@ const int DEFAULT_CLIENT_CODE_SIZE = 2;
 const int DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE = 4;
 const int DEFAULT_CLIENT_PAYLOAD_SIZE = -1;
 
+// response 1028 header's param for request size
+const int DEFAULT_CONTENT_SIZE = 4;
+const int DEFAULT_ORG_FILE_SIZE = 4;
+const int DEFAULT_PACKET_NUMBER_SIZE = 2;
+const int DEFAULT_TOTAL_PACKET_SIZE = 2;
+
 
 // Default values to request header
 const std::string DEFAULT_CLIENT_ID(16, '\x00');

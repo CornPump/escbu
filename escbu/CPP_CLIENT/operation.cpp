@@ -55,7 +55,7 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
     std::filesystem::path output_file = std::filesystem::current_path() / add;
 
     std::string empty;
-    std::cout << "file " << full_path.string() << " exist: " << std::filesystem::exists(full_path.string()) << std::endl;
+    
     try {
         std::ifstream infile(full_path.string(), std::ios::binary);
         if (!infile.is_open()) {
@@ -63,7 +63,7 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
             return empty;
         }
 
-        // Send file content in chunks 
+        // read, ecnrypt and write file content in chunks 
         std::string buffer(MESSAGE_MAX_LENGTH,'\0');
 
         while (infile.read(&buffer[0], MESSAGE_MAX_LENGTH) || infile.gcount() > 0) {
