@@ -2,6 +2,7 @@ import os
 import helpers_request
 import binascii
 import aes
+import request_handler
 BACK_UP_DIR_NAME = "backup_server"
 
 
@@ -66,20 +67,53 @@ def convert_uuid_to_dir_name(uuid):
 
 def receive_file2(cur_packet,total_packets,read_size,file,aes_key,rm):
     print(read_size)
+    print(cur_packet)
     if cur_packet <= 0 or total_packets <= 0:
-        rm.send_general_error_response()
-        return
+        return False
 
     enc_file_name = os.path.join(os.path.dirname(file),'encrypted_'+os.path.basename(file))
     # first time
     if cur_packet == 1:
         data = rm.conn.recv(read_size)
-        print("pure_data=",data)
+        print('data:',data)
         with open(enc_file_name, 'wb') as encrypted_file:
             encrypted_file.write(data)
 
         with open(file, 'wb') as f:
             iv = aes.generate_zero_iv()
             decrypted_data = aes.decrypt_data(data, aes_key, iv)
-            print('decrypted_data:',decrypted_data)
+            print('decrypted_data:', decrypted_data)
             f.write(decrypted_data)
+
+        if total_packets == 1:
+            return True
+        else:
+            receive_file2(cur_packet + 1, total_packets, read_size, file, aes_key, rm)
+    else:
+        # create RequestHandler instance
+        rh = request_handler.RequestHandler(rm.conn)
+        # read minimum header into it
+        rh.read_minimum_header()
+        if rh.opcode == helpers_request.REQUEST['SEND_FILE']:
+            none_file_payload_size = helpers_request.DEFAULT_CONTENT_SIZE + helpers_request.DEFAULT_ORG_FILE_SIZE + \
+                                     helpers_request.DEFAULT_PACKET_NUMBER_SIZE + helpers_request.DEFAULT_TOTAL_PACKET_SIZE + \
+                                     + helpers_request.CLIENT_FILE_NAME_SIZE
+
+            payload = rm.conn.recv(none_file_payload_size)
+            read_size = rh.payload_size - none_file_payload_size
+
+            data = rm.conn.recv(read_size)
+            with open(enc_file_name, 'ab') as encrypted_file:
+                encrypted_file.write(data)
+
+            with open(file, 'ab') as f:
+                iv = aes.generate_zero_iv()
+                decrypted_data = aes.decrypt_data(data, aes_key, iv)
+                f.write(decrypted_data)
+
+            if cur_packet == total_packets:
+                return True
+            else:
+                receive_file2(cur_packet+1, total_packets, 0, file, aes_key, rm)
+        else:
+            return False
