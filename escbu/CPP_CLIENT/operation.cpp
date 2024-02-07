@@ -48,11 +48,12 @@ long long get_file_size(const std::string& filename) {
 
 std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_wrapper) {
 
-
+    
     std::filesystem::path full_path = std::filesystem::current_path() / filename;
 
     std::string add = filename + "_encrypted.txt";
     std::filesystem::path output_file = std::filesystem::current_path() / add;
+    std::cout << "Creating encrypted file.." << output_file.string() << std::endl;
 
     std::string empty;
     
@@ -69,14 +70,14 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
         while (infile.read(&buffer[0], MESSAGE_MAX_LENGTH) || infile.gcount() > 0) {
             buffer.resize(static_cast<size_t>(infile.gcount()));
 
-            std::cout << "bytesRead = " << infile.gcount() << std::endl;
-            std::cout << "buffer = " << buffer << std::endl;
+            //std::cout << "bytesRead = " << infile.gcount() << std::endl;
+            //std::cout << "buffer = " << buffer << std::endl;
 
             std::string ciphertext = aes_wrapper->encrypt(buffer.c_str(), buffer.length());
-            std::cout << "ciphertext = " << ciphertext << std::endl;
+            //std::cout << "ciphertext = " << ciphertext << std::endl;
             hexify(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.length());
             std::string decrypttext = aes_wrapper->decrypt(ciphertext.c_str(), ciphertext.length());
-            std::cout << "Decrypted:" << std::endl << decrypttext << std::endl;
+            //std::cout << "Decrypted:" << std::endl << decrypttext << std::endl;
 
 
 

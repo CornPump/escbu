@@ -402,8 +402,7 @@ ResponseType Client::start_registration_second_phase() {
 }
 
 ResponseType Client::send_file_sequence() {
-    
-    std::cout << "Creating encyrpted file.." << std::endl;    
+      
     std::string encrypted_file = create_encrypted_file(get_transfer_file_name(), this->aes_ptr);
 
     std::tuple<uint32_t, uint32_t> tup = check_sum(get_transfer_file_name());
@@ -423,7 +422,7 @@ ResponseType Client::send_file_sequence() {
         DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE + DEFAULT_CONTENT_SIZE + DEFAULT_ORG_FILE_SIZE +
         DEFAULT_PACKET_NUMBER_SIZE + DEFAULT_TOTAL_PACKET_SIZE + NAME_MAX_LENGTH;
 
-    uint16_t number_of_packets = std::ceil(enc_file_size / (static_cast<float>(header_size) + MESSAGE_MAX_LENGTH));
+    uint16_t number_of_packets = std::ceil(enc_file_size / static_cast<float>(MESSAGE_MAX_LENGTH));
 
     try {
         std::ifstream infile(encrypted_file, std::ios::binary);
@@ -443,42 +442,42 @@ ResponseType Client::send_file_sequence() {
             std::vector<uint8_t> message = create_basic_header(RequestType::SEND_FILE);
 
             uint32_t payload_size = header_size + static_cast<size_t>(infile.gcount()) - DEFAULT_CLIENT_ID_SIZE
-                - DEFAULT_CLIENT_VERSION_SIZE - DEFAULT_CLIENT_CODE_SIZE;
+                - DEFAULT_CLIENT_VERSION_SIZE - DEFAULT_CLIENT_CODE_SIZE - DEFAULT_CLIENT_PAYLOAD_SIZE_SIZE;
 
-            std::cout << "payload_size:" << payload_size << std::endl;
+            //std::cout << "payload_size:" << payload_size << std::endl;
             payload_size = htonl(payload_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&payload_size),
                 reinterpret_cast<uint8_t*>(&payload_size) + sizeof(uint32_t));
             
-            std::cout << "encrypted_file_size:" << enc_file_size << std::endl;
+            //std::cout << "encrypted_file_size:" << enc_file_size << std::endl;
             enc_file_size = htonl(enc_file_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&enc_file_size),
                 reinterpret_cast<uint8_t*>(&enc_file_size) + sizeof(uint32_t));
 
-            std::cout << "orig_file_size:" << orig_file_size << std::endl;
+            //std::cout << "orig_file_size:" << orig_file_size << std::endl;
             orig_file_size = htonl(orig_file_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&orig_file_size),
                 reinterpret_cast<uint8_t*>(&orig_file_size) + sizeof(uint32_t));
             
-            std::cout << "cur_packet_num:" << cur_packet_num << std::endl;
+            //std::cout << "cur_packet_num:" << cur_packet_num << std::endl;
             cur_packet_num = htons(cur_packet_num);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&cur_packet_num),
                 reinterpret_cast<uint8_t*>(&cur_packet_num) + sizeof(uint16_t));
             
-            std::cout << "number_of_packets:" << number_of_packets << std::endl;
+            //std::cout << "number_of_packets:" << number_of_packets << std::endl;
             number_of_packets = htons(number_of_packets);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&number_of_packets),
                 reinterpret_cast<uint8_t*>(&number_of_packets) + sizeof(uint16_t));
             
 
             message.insert(message.end(), padded_original_file_name.begin(), padded_original_file_name.end());
-            std::cout << "padded_original_file_name:" << padded_original_file_name << std::endl;
+            //std::cout << "padded_original_file_name:" << padded_original_file_name << std::endl;
 
+            message.insert(message.end(), buffer.begin(), buffer.end());
 
             boost::asio::write(this->get_socket(), boost::asio::buffer(message));
-            std::cout << "Sent Request " << static_cast<int>(RequestType::SEND_FILE) << ":SEND_FILE" << std::endl;
+            //std::cout << "Sent Request " << static_cast<int>(RequestType::SEND_FILE) << ":SEND_FILE" << std::endl;
             cur_packet_num++;
-            send_file(encrypted_file, this->get_socket(), enc_file_size);
         }
 
     }
