@@ -8,7 +8,8 @@ import aes
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 import os
-
+import cksum
+import time
 class RequestManager:
 
     def __init__(self, connection, data_handler):
@@ -27,6 +28,7 @@ class RequestManager:
     def append(self,request):
         self.request_lst.append(request)
         self.num_requests += 1
+
 
     def start_request_sequence(self):
 
@@ -50,15 +52,12 @@ class RequestManager:
             seq_ret_code = self.start_registration_success_sequence()
 
             if seq_ret_code == helpers_response.Response["REGISTER_AES_KEY"]:
-                self.start_receive_file_sequence()
+                received_file = self.start_receive_file_sequence()
+                self.start_crc_sequence(received_file)
 
             elif seq_ret_code == helpers_response.Response['ERROR_F'] or \
                     seq_ret_code == helpers_response.Response['INTERNAL_F']:
                 self.send_general_error_response()
-
-
-
-
 
 
     def get_latest_req(self):
@@ -106,7 +105,7 @@ class RequestManager:
 
         self.dth.add_new_client(id=new_uuid, name=self.get_latest_req().name)
 
-        print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}")
+        print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}:REGISTER_S")
         resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], new_uuid)
         resh.send_request()
 
@@ -144,7 +143,7 @@ class RequestManager:
             resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_AES_KEY'],
                                                     new_uuid + encrypted_aes_key)
 
-            print(f'Sending Response {helpers_response.Response["REGISTER_AES_KEY"]}')
+            print(f'Sending Response {helpers_response.Response["REGISTER_AES_KEY"]}:REGISTER_AES_KEY')
             resh.send_request()
 
             return helpers_response.Response["REGISTER_AES_KEY"]
@@ -166,8 +165,12 @@ class RequestManager:
         none_file_payload_size = helpers_request.DEFAULT_CONTENT_SIZE + helpers_request.DEFAULT_ORG_FILE_SIZE +\
                         helpers_request.DEFAULT_PACKET_NUMBER_SIZE + helpers_request.DEFAULT_TOTAL_PACKET_SIZE +\
                         + helpers_request.CLIENT_FILE_NAME_SIZE
+        try:
+            payload = self.conn.recv(none_file_payload_size)
+        except Exception as e:
+            print(e)
+            return False
 
-        payload = self.conn.recv(none_file_payload_size)
 
         adder = 0
         enc_file_size = rh.convert_from_little_endian(payload[:helpers_request.DEFAULT_CONTENT_SIZE],
@@ -195,14 +198,92 @@ class RequestManager:
 
         self.dth.add_new_file(rh.client_id, file_name, client_dir_relative_path)
 
-        operation.receive_file2(packet_number,total_packets,
+        is_received_file = operation.receive_file(packet_number,total_packets,
                                 rh.payload_size - none_file_payload_size,
                                 os.path.join(client_dir_relative_path, file_name),
                                 self.dth.fetch_aes_key(rh.client_id), self)
+        if is_received_file:
+            return os.path.join(client_dir_relative_path,file_name)
+
+        return False
+
+    def check_crc_with_client(self,received_file):
+        deecrypted_tup = cksum.cksum(received_file)
+        # print(deecrypted_tup)
+
+        encrypted_file = os.path.join(os.path.dirname(received_file), 'encrypted_' + os.path.basename(received_file))
+        encrypted_tup = cksum.cksum(encrypted_file)
+        # print(encrypted_tup)
+        rh = request_handler.RequestHandler(self.conn)
+        content_size = rh.convert_to_little_endian(encrypted_tup[1],
+                                                   helpers_response.DEFAULT_CONTENT_SIZE_SIZE)
+        checksum = rh.convert_to_little_endian(deecrypted_tup[0],
+                                               helpers_response.DEFAULT_CHECKSUM_SIZE)
+        padded_file_name = os.path.basename(received_file).encode()
+        padded_file_name = padded_file_name.ljust(helpers_request.CLIENT_FILE_NAME_SIZE, b'\x00')
+        # print('content_size: ',content_size)
+        # print('self.get_latest_req().client_id:',self.get_latest_req().client_id)
+        # print('checksum: ', checksum)
+        # print('padded_file_name:',padded_file_name)
+        resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['CHECK_CRC'],
+                                                self.get_latest_req().client_id + content_size +
+                                                padded_file_name + checksum)
+        print(f'Checking CRC handshake with client sending Response: {resh.opcode}:CHECK_CRC')
+        resh.send_request()
+
+
+
+    def start_crc_sequence(self,received_file):
+        if received_file:
+            succed = False
+            times = 0
+            while (not succed or times == helpers_response.MAX_TRIES_TO_APPROVE_CRC):
+                print('times:',times)
+                self.check_crc_with_client(received_file)
+
+                rh = request_handler.RequestHandler(self.conn)
+                rh.read_minimum_header()
+                self.append(rh)
+                rh.file_name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
+                self.dth.update_last_seen(rh.client_id)
+
+                if rh.opcode == helpers_request.REQUEST['CRC_APP']:
+                    succed = True
+                    resh = response_handler.ResponseHandler(self.conn,
+                                                            helpers_response.Response['CRC_SEQ_FINISH'],
+                                                            rh.client_id)
+
+                    print(f'successfully approved CRC handshake with client {rh.client_id}\n'
+                          f'file:{rh.file_name} have been passed succefully '
+                          f'sending Response {helpers_response.Response["CRC_SEQ_FINISH"]}')
+
+                    resh.send_request()
+                elif rh.opcode == helpers_request.REQUEST['CRC_DEN_FI']:
+                    break
+
+                else:
+                    ff = self.start_receive_file_sequence()
+                    times += 1
+                    if ff != received_file:
+                        self.send_general_error_response()
+
+
+
+            if not succed:
+                resh6 = response_handler.ResponseHandler(self.conn,
+                                                        helpers_response.Response['CRC_SEQ_FINISH'],
+                                                        rh.client_id)
+                resh6.send_request()
+
+                print(f'CRC handshake with client {rh.client_id}\ndenied,'
+                      f'A Failure has occured in receive file:{rh.file_name} \n '
+                      f'sending Response {helpers_response.Response["CRC_SEQ_FINISH"]}')
 
 
 
 
-
-
-
+        else:
+            self.send_general_error_response()
+        # if not received there was an error in receving send error
+        # if true we received the file succefuly
+        # need to create 1603 response and send it

@@ -61,10 +61,10 @@ class DataHandler:
     def add_new_client(self,id=None,name=None,publickey=None,aeskey=None):
         lastseen = datetime.datetime.now()
         if self.state == State['FT']:
-            return self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
+            self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
         elif self.state == State['TF']:
-            return self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
+            self.ram_h.add_new_client(id,name,publickey,lastseen,aeskey)
 
         elif self.state == State['TT']:
             self.sql_h.add_new_client(id,name,publickey,lastseen,aeskey)
@@ -73,10 +73,10 @@ class DataHandler:
     def add_publickey(self,public_key,client_id):
         lastseen = datetime.datetime.now()
         if self.state == State['FT']:
-            return self.sql_h.add_publickey(public_key,client_id,lastseen)
+            self.sql_h.add_publickey(public_key,client_id,lastseen)
 
         elif self.state == State['TF']:
-            return self.ram_h.add_publickey(public_key,client_id,lastseen)
+            self.ram_h.add_publickey(public_key,client_id,lastseen)
 
         elif self.state == State['TT']:
             self.sql_h.add_publickey(public_key,client_id,lastseen)
@@ -86,10 +86,10 @@ class DataHandler:
         lastseen = datetime.datetime.now()
 
         if self.state == State['FT']:
-            return self.sql_h.add_aeskey(aes_key, client_id, lastseen)
+            self.sql_h.add_aeskey(aes_key, client_id, lastseen)
 
         elif self.state == State['TF']:
-            return self.ram_h.add_aeskey(aes_key, client_id, lastseen)
+            self.ram_h.add_aeskey(aes_key, client_id, lastseen)
 
         elif self.state == State['TT']:
             self.sql_h.add_aeskey(aes_key, client_id, lastseen)
@@ -131,10 +131,10 @@ class DataHandler:
     def update_last_seen(self,client_id):
         lastseen = datetime.datetime.now()
         if self.state == State['FT']:
-            return self.sql_h.update_last_seen(client_id, lastseen)
+            self.sql_h.update_last_seen(client_id, lastseen)
 
         elif self.state == State['TF']:
-            return self.ram_h.update_last_seen(client_id, lastseen)
+            self.ram_h.update_last_seen(client_id, lastseen)
 
         elif self.state == State['TT']:
             self.sql_h.update_last_seen(client_id, lastseen)
@@ -143,10 +143,10 @@ class DataHandler:
 
     def add_new_file(self,client_id, file_name, client_dir_relative_path):
         if self.state == State['FT']:
-            return self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)
+            self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)
 
         elif self.state == State['TF']:
-            return self.add_new_file(client_id, file_name, client_dir_relative_path)
+            self.add_new_file(client_id, file_name, client_dir_relative_path)
 
         elif self.state == State['TT']:
             self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)

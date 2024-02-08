@@ -151,7 +151,7 @@ class SqlDbHandler:
 
         columns = [files_keys[0],files_keys[1],files_keys[2],files_keys[3]]
         sql_query = f'''
-            INSERT INTO files ({', '.join(columns)})
+            INSERT OR IGNORE INTO files ({', '.join(columns)})
             VALUES (?, ?, ?, ?)
         '''
         cursor.execute(sql_query, (client_id, file_name, client_dir_relative_path, False))

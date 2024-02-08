@@ -79,6 +79,8 @@ class RequestHandler:
         self.opcode = opcode
         self.payload_size = payload_size
 
-        print(f'Received Request: (client_id:{client_id},opcode:{opcode},client_version:{client_version},payload_size:{payload_size})')
+        result = [key for key, item in helpers_request.REQUEST.items() if item == opcode]
+
+        print(f'Received Request:{result}: (client_id:{client_id},opcode:{opcode},client_version:{client_version},payload_size:{payload_size})')
 
 
