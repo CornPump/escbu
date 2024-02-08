@@ -53,6 +53,8 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
 
     std::string add = filename + "_encrypted.txt";
     std::filesystem::path output_file = std::filesystem::current_path() / add;
+    if (std::filesystem::exists(output_file.string())) {
+        return output_file.string();}
     std::cout << "Creating encrypted file.." << output_file.string() << std::endl;
 
     std::string empty;
@@ -75,7 +77,7 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
 
             std::string ciphertext = aes_wrapper->encrypt(buffer.c_str(), buffer.length());
             //std::cout << "ciphertext = " << ciphertext << std::endl;
-            hexify(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.length());
+            //hexify(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.length());
             std::string decrypttext = aes_wrapper->decrypt(ciphertext.c_str(), ciphertext.length());
             //std::cout << "Decrypted:" << std::endl << decrypttext << std::endl;
 
