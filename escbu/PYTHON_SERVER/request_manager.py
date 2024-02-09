@@ -59,6 +59,21 @@ class RequestManager:
                     seq_ret_code == helpers_response.Response['INTERNAL_F']:
                 self.send_general_error_response()
 
+        elif response_code == helpers_response.Response['LOGIN_F']:
+            print(f"Login failure sending Response: {helpers_response.Response['LOGIN_F']}:'LOGIN_F' to client: {rh.name}")
+            resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['LOGIN_F'], "")
+            resh.send_request()
+
+        elif response_code == helpers_response.Response['LOGIN_S']:
+            if self.start_login_success_sequence():
+                received_file = self.start_receive_file_sequence()
+                self.start_crc_sequence(received_file)
+
+            else:
+                # internal error sending general error
+                self.send_general_error_response()
+
+
 
     def get_latest_req(self):
         return self.request_lst[self.num_requests - 1]
@@ -93,11 +108,46 @@ class RequestManager:
                 return helpers_response.Response['ERROR_F']
 
         elif opcode == helpers_request.REQUEST['LOGIN']:
-            pass
+            if rh.payload_size != helpers_request.CLIENT_NAME_SIZE:
+                return helpers_response.Response['ERROR_F']
+            rh.name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
+            is_valid_login = self.dth.validate_login_request(rh.client_id,rh.name)
+            if is_valid_login:
+                return helpers_response.Response['LOGIN_S']
+            else:
+                return helpers_response.Response['LOGIN_F']
+
         else:
             print(f"Validate request failed due to impossible starting sequence code:{opcode} \n"
                   f"sending Response: {helpers_response.Response['ERROR_F']}")
             return helpers_response.Response['ERROR_F']
+
+    def start_login_success_sequence(self):
+        # add client to database and send register success Response
+        old_uuid = self.dth.fetch_client_id(self.get_latest_req().name)
+
+        print(f"Generating aes_key for client:{old_uuid} ")
+        aes_key = aes.generate_aes_key()
+        self.dth.add_aeskey(aes_key=aes_key, client_id=old_uuid)
+
+        print(f"encrypting aes_key for client:{old_uuid} using his public_key")
+
+        # Encrypt the AES key using RSA public key
+        imported_public_key = RSA.import_key(self.dth.fetch_public_rsa(client_id=old_uuid))
+        cipher_rsa = PKCS1_OAEP.new(imported_public_key)
+        encrypted_aes_key = cipher_rsa.encrypt(aes_key)
+
+        print(f"Sending approval request: {helpers_response.Response['LOGIN_S']}:LOGIN_S")
+        resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['LOGIN_S'], old_uuid +
+                                                encrypted_aes_key)
+        try:
+            resh.send_request()
+            return True
+
+        except Exception as e:
+            print(e)
+            return False
+
 
     def start_registration_success_sequence(self):
         # add client to database and send register success Response
@@ -153,6 +203,8 @@ class RequestManager:
             print(f'Responding with general error to client:{rh.client_id} '
                   f'but got helpers_response.Response["INTERNAL_F"]:Internal_error')
             return helpers_response.Response["INTERNAL_F"]
+
+
 
 
     def start_receive_file_sequence(self):
@@ -258,6 +310,7 @@ class RequestManager:
                           f'sending Response {helpers_response.Response["CRC_SEQ_FINISH"]}')
 
                     resh.send_request()
+                    self.dth.tik_file_verification(os.path.basename(received_file),rh.client_id)
                 elif rh.opcode == helpers_request.REQUEST['CRC_DEN_FI']:
                     break
 

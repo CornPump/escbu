@@ -25,7 +25,12 @@ class RamHandler:
 
             for row in rows_lst:
                 inner_dict = {files_keys[1]: row[1], files_keys[2]: row[2], files_keys[3]: row[3]}
-                self.files[row[0]] = inner_dict
+                if not row[0] in self.files:
+                    self.files[row[0]] = []
+                    self.files[row[0]].append(inner_dict)
+                else:
+                    self.files[row[0]].append(inner_dict)
+
 
     def is_name_exist(self, name):
         for key, value in self.clients.items():
@@ -58,6 +63,21 @@ class RamHandler:
     def add_new_file(self, client_id, file_name, client_dir_relative_path):
         inner_dict = {files_keys[1]: file_name, files_keys[2]: client_dir_relative_path,
                       files_keys[3]: False}
-        self.files[client_id] = inner_dict
+        if not client_id in self.files:
+            self.files[client_id] = []
+            self.files[client_id].append(inner_dict)
+        else:
+            self.files[client_id].append(inner_dict)
+
+    def tik_file_verification(self,received_file,client_id):
+        for file_dict in self.files[client_id]:
+            if file_dict['Name'] == received_file:
+                file_dict['Verified'] = 1
+
+    def fetch_client_id(self, name):
+        for key, item in self.clients.items():
+            if item["Name"] == name:
+                return key
+
 
 

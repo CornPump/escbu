@@ -36,9 +36,16 @@ if __name__ == "__main__":
         print('Connected by user', addr)
         with conn:
             s.settimeout(10)
-            rm = request_manager.RequestManager(conn,dth)
+            rm = request_manager.RequestManager(conn, dth)
+            #rm.start_request_sequence()
 
-            rm.start_request_sequence()
+            try:
+                while (True):
+                    rm.start_request_sequence()
+                    time.sleep(1)
+            except Exception as e:
+                print(f"Closing connection {rm.request_lst[0].client_id} due to error:\n {e}")
+
             fff = r"C:\Users\Fisher\PycharmProjects\escbu\escbu\escbu\PYTHON_SERVER\defensive.db"
             #os.remove(fff)
             #print(rm)

@@ -22,7 +22,7 @@ class SqlDbHandler:
         # Create the second table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS files (
-                {} BLOB PRIMARY KEY,
+                {} BLOB,
                 {} TEXT,
                 {} TEXT,
                 {} BOOLEAN
@@ -121,6 +121,19 @@ class SqlDbHandler:
         conn.commit()
         conn.close()
 
+    def tik_file_verification(self,received_file,client_id):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = '''
+                                    UPDATE files
+                                    SET Verified = ?
+                                    WHERE ID = ? AND Name = ?
+                                '''
+        cursor.execute(query, (True, client_id, received_file))
+
+        conn.commit()
+        conn.close()
     def fetch_public_rsa(self, client_id):
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
@@ -149,12 +162,27 @@ class SqlDbHandler:
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
 
-        columns = [files_keys[0],files_keys[1],files_keys[2],files_keys[3]]
+        columns = [files_keys[0], files_keys[1], files_keys[2], files_keys[3]]
         sql_query = f'''
-            INSERT OR IGNORE INTO files ({', '.join(columns)})
-            VALUES (?, ?, ?, ?)
+            INSERT INTO files ({', '.join(columns)})
+            SELECT ?, ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1 FROM files WHERE ID = ? AND Name = ?
+            )
         '''
-        cursor.execute(sql_query, (client_id, file_name, client_dir_relative_path, False))
+        cursor.execute(sql_query, (client_id, file_name, client_dir_relative_path, False, client_id, file_name))
 
         conn.commit()
         conn.close()
+
+    def fetch_client_id(self, name):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+
+        query = 'SELECT ID FROM clients WHERE Name = ?'
+        cursor.execute(query, (name,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        return result[0]

@@ -123,7 +123,7 @@ class DataHandler:
             ram_aes_key = self.ram_h.fetch_aes_key(client_id)
 
             if (sql_aes_key != ram_aes_key):
-                print(f'[WARNING] Missmatch in fetch_public_rsa() sql_h return:{sql_aes_key}\n ram_h: return{ram_aes_key}')
+                print(f'[WARNING] Missmatch in fetch_aes_key() sql_h return:{sql_aes_key}\n ram_h: return{ram_aes_key}')
 
             return ram_aes_key
 
@@ -151,6 +151,50 @@ class DataHandler:
         elif self.state == State['TT']:
             self.sql_h.add_new_file(client_id, file_name, client_dir_relative_path)
             self.ram_h.add_new_file(client_id, file_name, client_dir_relative_path)
+
+
+    def fetch_client_id(self,name):
+        if self.state == State['FT']:
+            return self.sql_h.fetch_client_id(name)
+
+        elif self.state == State['TF']:
+            return self.ram_h.fetch_client_id(name)
+
+        elif self.state == State['TT']:
+            sql_client_id = self.sql_h.fetch_client_id(name)
+            ram_client_id = self.ram_h.fetch_client_id(name)
+
+            if (sql_client_id != ram_client_id):
+                print(f'[WARNING] Missmatch in fetch_client_id() sql_h return:{sql_client_id}\n ram_h: return{ram_client_id}')
+
+            return ram_client_id
+
+    def validate_login_request(self,client_id_from_client,name):
+        name_exist = self.is_name_exist(name)
+        if name_exist:
+            client_id_db = self.fetch_client_id(name)
+            if client_id_db == client_id_from_client:
+                public_key = self.fetch_public_rsa(client_id_db)
+                return public_key
+
+
+        return False
+
+    def tik_file_verification(self,received_file,client_id):
+        print('received_file:',received_file)
+        print('client_id:',client_id)
+        if self.state == State['FT']:
+            self.sql_h.tik_file_verification(received_file,client_id)
+
+        elif self.state == State['TF']:
+            self.tik_file_verification(received_file,client_id)
+
+        elif self.state == State['TT']:
+            self.sql_h.tik_file_verification(received_file,client_id)
+            self.ram_h.tik_file_verification(received_file,client_id)
+
+
+
 
 
 
