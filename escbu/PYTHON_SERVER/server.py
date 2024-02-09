@@ -3,10 +3,17 @@ import os
 import operation
 import request_manager
 import data_handler
-import time
+import threading
 
 HOST = '127.0.0.1'
 PORT = 1256
+
+def handle_client(conn,addr):
+    print('Connected by user', addr)
+    with conn:
+        conn.settimeout(10)
+        rm = request_manager.RequestManager(conn, dth)
+        rm.start_request_sequence()
 
 if __name__ == "__main__":
 
@@ -32,23 +39,11 @@ if __name__ == "__main__":
             exit()
         print("Listening and waiting for clients..")
         s.listen()
-        conn, addr = s.accept()
-        print('Connected by user', addr)
-        with conn:
-            s.settimeout(10)
-            rm = request_manager.RequestManager(conn, dth)
-            #rm.start_request_sequence()
+        while True:
+            conn, addr = s.accept()
+            thread = threading.Thread(target=handle_client, args=(conn,addr))
+            thread.start()
 
-            try:
-                while (True):
-                    rm.start_request_sequence()
-                    time.sleep(1)
-            except Exception as e:
-                print(f"Closing connection {rm.request_lst[0].client_id} due to error:\n {e}")
-
-            fff = r"C:\Users\Fisher\PycharmProjects\escbu\escbu\escbu\PYTHON_SERVER\defensive.db"
-            #os.remove(fff)
-            #print(rm)
 
 
 

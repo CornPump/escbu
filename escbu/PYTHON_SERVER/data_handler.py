@@ -181,8 +181,6 @@ class DataHandler:
         return False
 
     def tik_file_verification(self,received_file,client_id):
-        print('received_file:',received_file)
-        print('client_id:',client_id)
         if self.state == State['FT']:
             self.sql_h.tik_file_verification(received_file,client_id)
 

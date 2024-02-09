@@ -93,7 +93,11 @@ class RequestManager:
                 rh.name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
 
                 # check if client name already exists, if it is send REGISTER_F
-                name_exist = self.dth.is_name_exist(rh.name)
+                try:
+                    name_exist = self.dth.is_name_exist(rh.name)
+                except Exception as e:
+                    print(e)
+                    return helpers_response.Response['REGISTER_F']
 
                 if name_exist:
                     print(f"Validate request failed due to name already existing in db\n"
@@ -111,7 +115,12 @@ class RequestManager:
             if rh.payload_size != helpers_request.CLIENT_NAME_SIZE:
                 return helpers_response.Response['ERROR_F']
             rh.name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
-            is_valid_login = self.dth.validate_login_request(rh.client_id,rh.name)
+            try:
+                is_valid_login = self.dth.validate_login_request(rh.client_id,rh.name)
+            except Exception as e:
+                print(e)
+                return helpers_response.Response['ERROR_F']
+
             if is_valid_login:
                 return helpers_response.Response['LOGIN_S']
             else:
@@ -124,16 +133,28 @@ class RequestManager:
 
     def start_login_success_sequence(self):
         # add client to database and send register success Response
-        old_uuid = self.dth.fetch_client_id(self.get_latest_req().name)
+        try:
+            old_uuid = self.dth.fetch_client_id(self.get_latest_req().name)
+        except Exception as e:
+            print(e)
+            return False
 
         print(f"Generating aes_key for client:{old_uuid} ")
         aes_key = aes.generate_aes_key()
-        self.dth.add_aeskey(aes_key=aes_key, client_id=old_uuid)
+        try:
+            self.dth.add_aeskey(aes_key=aes_key, client_id=old_uuid)
+        except Exception as e:
+            print(e)
+            return False
 
         print(f"encrypting aes_key for client:{old_uuid} using his public_key")
 
         # Encrypt the AES key using RSA public key
-        imported_public_key = RSA.import_key(self.dth.fetch_public_rsa(client_id=old_uuid))
+        try:
+            imported_public_key = RSA.import_key(self.dth.fetch_public_rsa(client_id=old_uuid))
+        except Exception as e:
+            print(e)
+            return False
         cipher_rsa = PKCS1_OAEP.new(imported_public_key)
         encrypted_aes_key = cipher_rsa.encrypt(aes_key)
 
@@ -153,7 +174,12 @@ class RequestManager:
         # add client to database and send register success Response
         new_uuid = uuid.uuid4().bytes
 
-        self.dth.add_new_client(id=new_uuid, name=self.get_latest_req().name)
+        try:
+            self.dth.add_new_client(id=new_uuid, name=self.get_latest_req().name)
+        except Exception as e:
+            print(e)
+            return helpers_response.Response["INTERNAL_F"]
+
 
         print(f"Validate request accepted sending approval request: {helpers_response.Response['REGISTER_S']}:REGISTER_S")
         resh = response_handler.ResponseHandler(self.conn, helpers_response.Response['REGISTER_S'], new_uuid)
@@ -241,14 +267,23 @@ class RequestManager:
 
         print(f'enc_file_size:{enc_file_size},orig_file_size:{orig_file_size},'
               f'packet_number:{packet_number},total_packets:{total_packets},\nfile_name:{file_name}')
+        try:
+            self.dth.update_last_seen(rh.client_id)
+        except Exception as e:
+            print(e)
+            return False
 
-        self.dth.update_last_seen(rh.client_id)
 
         client_dir = operation.create_user_directory(rh.client_id)
 
         client_dir_relative_path = os.path.join(operation.BACK_UP_DIR_NAME,os.path.basename(client_dir))
 
-        self.dth.add_new_file(rh.client_id, file_name, client_dir_relative_path)
+        try:
+            self.dth.add_new_file(rh.client_id, file_name, client_dir_relative_path)
+        except Exception as e:
+            print(e)
+            return False
+
 
         is_received_file = operation.receive_file(packet_number,total_packets,
                                 rh.payload_size - none_file_payload_size,
@@ -297,7 +332,11 @@ class RequestManager:
                 rh.read_minimum_header()
                 self.append(rh)
                 rh.file_name = self.conn.recv(helpers_request.CLIENT_NAME_SIZE).decode('utf-8').rstrip('\0')
-                self.dth.update_last_seen(rh.client_id)
+                try:
+                    self.dth.update_last_seen(rh.client_id)
+                except Exception as e:
+                    print(e)
+                    break
 
                 if rh.opcode == helpers_request.REQUEST['CRC_APP']:
                     succed = True
