@@ -23,13 +23,14 @@ const int DEFAULT_PACKET_NUMBER_SIZE = 2;
 const int DEFAULT_TOTAL_PACKET_SIZE = 2;
 
 
+
 // Default values to request header
 const std::string DEFAULT_CLIENT_ID(16, '\x00');
-const uint8_t CLIENT_VERSION = 3;
+const uint8_t CLIENT_VERSION = 4;
 
 
 // How many times to try for checksum for CRC
-const int TIMES = 4;
+const int TIMES = 3;
 
 // Request codes
 enum class RequestType :uint16_t {

@@ -12,6 +12,11 @@ const int DEFAULT_SERVER_PAYLOAD_SIZE = -1;
 
 const int MIN_RESPONSE_SIZE = DEFAULT_SERVER_VERSION_SIZE + DEFAULT_SERVER_CODE_SIZE + DEFAULT_SERVER_PAYLOAD_SIZE_SIZE;
 
+// response 1603 header's param for request size
+const int DEFAULT_ECNRYPTED_CONTENT_SIZE = 4;
+const int DEFAULT_CHECKSUM_SIZE = 4;
+
+
 enum class ResponseType :uint16_t {
 
     // First step of registeration succeed (response to 1025)
@@ -24,6 +29,10 @@ enum class ResponseType :uint16_t {
     CHECK_CRC = 1603,
     // Client finishes CRC sequence either it failed or succeed depdends on number of times tried 
     CRC_SEQ_FINISH = 1604,
+    // Client finishes CRC sequence failed for internal use only!
+    CRC_SEQ_FINISH_F = 16040,
+    // Client finishes CRC sequence succeed for internal use only!
+    CRC_SEQ_FINISH_S = 16041,
     // Login successfully
     LOGIN_S = 1605,
     // Client didn't register or the public key wasn't registered with the server

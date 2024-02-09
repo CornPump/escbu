@@ -240,8 +240,23 @@ ResponseType Client::send_request(RequestType opcode) {
 
                 ResponseType res3 = this->send_file_sequence();
 
+                if (res3 == ResponseType::CRC_SEQ_FINISH_S) {
+
+                    std::cout << "File sent succefully!" << std::endl;
+                    return res3;
+
+                }
+
+                if (res3 == ResponseType::CRC_SEQ_FINISH_F) {
+
+                    std::cout << "Server couldn't encrypt the file, sending file operation failed." << std::endl;
+                    return res3;
+
+                }
+
+                else { return this->write_general_error_message(res3); }
             }
-            else { this->write_general_error_message(); }
+            else { return this->write_general_error_message(res2); }
 
         }
 
@@ -252,7 +267,7 @@ ResponseType Client::send_request(RequestType opcode) {
                 std::cout << "Registeration failure due to code: " << static_cast<int>(ResponseType::REGISTER_F) << std::endl;
                 return ResponseType::REGISTER_F;
             }
-            else { return this->write_general_error_message();}
+            else { return this->write_general_error_message(res);}
         
         }
         break;
@@ -262,7 +277,7 @@ ResponseType Client::send_request(RequestType opcode) {
     case RequestType::LOGIN: {
     
         boost::asio::write(this->get_socket(), boost::asio::buffer(message));
-        std::cout << "Sent Request "<< static_cast<int>(RequestType::LOGIN) << ":Login" << std::endl;
+        std::cout << "Sent Request "<< static_cast<int>(RequestType::LOGIN) << ":LOGIN" << std::endl;
         break;
     }
 
@@ -297,10 +312,16 @@ ResponseType Client::send_request(RequestType opcode, std::filesystem::path full
 
 }
 
-ResponseType Client::write_general_error_message() {
+ResponseType Client::write_general_error_message(ResponseType res) {
+    if (res == ResponseType::ERROR_F) {
+        std::cout << "Registeration failure due to server general error code: " << static_cast<int>(ResponseType::ERROR_F) << std::endl;
+    }
 
-    std::cout << "Registeration failure due to general error code: " << static_cast<int>(ResponseType::ERROR_F) << std::endl;
-    return ResponseType::ERROR_F;
+    if (res == ResponseType::INTERNAL_F) {
+        std::cout << "Registeration failure due to inernal error code: " << static_cast<int>(ResponseType::INTERNAL_F) << std::endl;
+    }
+
+    return res;
 
 }
 
@@ -365,7 +386,7 @@ ResponseType Client::start_registration_second_phase() {
     message.insert(message.end(), publicKey.begin(), publicKey.end());
 
     boost::asio::write(this->get_socket(), boost::asio::buffer(message));
-    std::cout << "Sent Request " << std::dec <<static_cast<int>(RequestType::SEND_PUBLIC_KEY) << ":REGISTER" << std::endl;
+    std::cout << "Sent Request " << std::dec <<static_cast<int>(RequestType::SEND_PUBLIC_KEY) << ":SEND_PUBLIC_KEY" << std::endl;
 
     // receive response
     ResponseHandler resh;
@@ -401,18 +422,18 @@ ResponseType Client::start_registration_second_phase() {
 
 }
 
-ResponseType Client::send_file_sequence() {
-      
+bool Client::send_my_file() {
+
     std::string encrypted_file = create_encrypted_file(get_transfer_file_name(), this->aes_ptr);
 
     std::tuple<uint32_t, uint32_t> tup = check_sum(get_transfer_file_name());
     uint32_t cksum = std::get<0>(tup);
     uint32_t orig_file_size = std::get<1>(tup);
-    std::cout << "check_sum_original:" << cksum << std::endl;
+    //std::cout << "check_sum_original:" << cksum << std::endl;
     std::tuple<uint32_t, uint32_t> tup2 = check_sum(encrypted_file);
     uint32_t cksum_enc = std::get<0>(tup2);
     uint32_t enc_file_size = std::get<1>(tup2);
-    std::cout << "check_sum_encrypted:" << cksum_enc << std::endl;
+    //std::cout << "check_sum_encrypted:" << cksum_enc << std::endl;
 
 
     std::string padded_original_file_name = get_transfer_file_name();
@@ -428,7 +449,7 @@ ResponseType Client::send_file_sequence() {
         std::ifstream infile(encrypted_file, std::ios::binary);
         if (!infile.is_open()) {
             std::cerr << "Error opening file: " << encrypted_file << std::endl;
-            return ResponseType::INTERNAL_F;
+            return false;
         }
 
         // Send file content in chunks 
@@ -448,7 +469,7 @@ ResponseType Client::send_file_sequence() {
             payload_size = htonl(payload_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&payload_size),
                 reinterpret_cast<uint8_t*>(&payload_size) + sizeof(uint32_t));
-            
+
             //std::cout << "encrypted_file_size:" << enc_file_size << std::endl;
             enc_file_size = htonl(enc_file_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&enc_file_size),
@@ -458,17 +479,17 @@ ResponseType Client::send_file_sequence() {
             orig_file_size = htonl(orig_file_size);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&orig_file_size),
                 reinterpret_cast<uint8_t*>(&orig_file_size) + sizeof(uint32_t));
-            
+
             //std::cout << "cur_packet_num:" << cur_packet_num << std::endl;
             cur_packet_num = htons(cur_packet_num);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&cur_packet_num),
                 reinterpret_cast<uint8_t*>(&cur_packet_num) + sizeof(uint16_t));
-            
+
             //std::cout << "number_of_packets:" << number_of_packets << std::endl;
             number_of_packets = htons(number_of_packets);
             message.insert(message.end(), reinterpret_cast<uint8_t*>(&number_of_packets),
                 reinterpret_cast<uint8_t*>(&number_of_packets) + sizeof(uint16_t));
-            
+
 
             message.insert(message.end(), padded_original_file_name.begin(), padded_original_file_name.end());
             //std::cout << "padded_original_file_name:" << padded_original_file_name << std::endl;
@@ -483,12 +504,116 @@ ResponseType Client::send_file_sequence() {
     }
     catch (const std::exception& e) {
         std::cerr << "Error opening file: " << e.what() << std::endl;
-        return ResponseType::INTERNAL_F;
+        return false;
     }
 
 
 
     std::remove(encrypted_file.c_str());
 
-    return ResponseType::ERROR_F;
+}
+
+ResponseType Client::send_file_sequence() {
+      
+    bool is_send_file_succed = send_my_file();
+
+    if (!is_send_file_succed) { return ResponseType::INTERNAL_F; }
+        
+
+
+    
+        for (int i = 1; i <= TIMES; i++) {
+            ResponseHandler resh;
+            resh.read_minimum_header(this->get_socket());
+            resh.print();
+            ResponseType res = resh.get_opcode();
+            if (res == ResponseType::CHECK_CRC) {
+                bool valid = is_checksum_valid(resh);
+                if (valid) {
+                
+                    std::cout << "CRC Approved by user-server handshake, sending code:"
+                        << static_cast<int>(RequestType::CRC_APP) << ":CRC_APP" << std::endl;
+
+                    std::vector<uint8_t> tmp_msg = create_basic_header(RequestType::CRC_APP);
+                    std::string file = get_transfer_file_name();
+                    std::vector<uint8_t> msg = append_name_to_message(tmp_msg, file);
+                    boost::asio::write(this->get_socket(), boost::asio::buffer(msg));
+
+              
+                    return ResponseType::CRC_SEQ_FINISH_S; }
+                else { 
+                
+                    if (i < TIMES){
+                        std::cout << "CRC denied #" << i + 1 << " by user-server handshake,trying again sending code:"
+                            << static_cast<int>(RequestType::CRC_DEN_RE) << ":CRC_DEN_RE" << std::endl;
+                    
+                        std::vector<uint8_t> tmp_msg = create_basic_header(RequestType::CRC_DEN_RE);
+                        std::string file = get_transfer_file_name();
+                        std::vector<uint8_t> msg = append_name_to_message(tmp_msg, file);
+                        boost::asio::write(this->get_socket(), boost::asio::buffer(msg));
+                        bool is_send_file_succed = send_my_file();
+
+                        if (!is_send_file_succed) { return ResponseType::INTERNAL_F; }
+                    
+                    }
+                    // if i == TIMES
+                    else {
+                        std::cout << "[FATAL] CRC denied by user-server handshake too many times #" << TIMES << ", sending code:"
+                            << static_cast<int>(RequestType::CRC_DEN_FI) << ":CRC_DEN_FI" << std::endl;
+
+                        std::vector<uint8_t> tmp_msg = create_basic_header(RequestType::CRC_DEN_FI);
+                        std::string file = get_transfer_file_name();
+                        std::vector<uint8_t> msg = append_name_to_message(tmp_msg, file);
+                        boost::asio::write(this->get_socket(), boost::asio::buffer(msg));
+
+                        std::cout << "Reading [FATAL] acceptance Response from server";
+                        ResponseHandler resh5;
+                        resh5.read_minimum_header(this->get_socket());
+                        std::vector<uint8_t> payload = resh5.read_payload(this->get_socket());
+                        std::cout << " Received Response:" << static_cast<int>(resh5.get_opcode()) << std::endl;
+                    
+                        return ResponseType::CRC_SEQ_FINISH_F;
+                    }
+                
+                }
+            
+            }   
+            else { return ResponseType::ERROR_F; }
+    }
+
+    
+}
+
+bool Client::is_checksum_valid(ResponseHandler& resh) {
+    
+    std::vector<uint8_t> payload = resh.read_payload(this->get_socket());
+    int adder = 0;
+
+    std::string client_id = { payload.begin() , payload.begin() + DEFAULT_CLIENT_ID_SIZE };
+    adder += DEFAULT_CLIENT_ID_SIZE;
+
+    uint32_t encrypted_file_size = 0;
+    std::copy(payload.begin() + adder, payload.begin() + adder + DEFAULT_ECNRYPTED_CONTENT_SIZE,
+        reinterpret_cast<uint8_t*>(&encrypted_file_size));
+    adder += DEFAULT_ECNRYPTED_CONTENT_SIZE;
+    encrypted_file_size = htonl(encrypted_file_size);
+    //std::cout << "encrypted_file_size:" << encrypted_file_size << std::endl;
+
+    std::string file_name(payload.begin() + adder, payload.begin() + adder + NAME_MAX_LENGTH);
+    adder += NAME_MAX_LENGTH;
+    //std::cout << "file_name:" << file_name << std::endl;
+
+    uint32_t server_checksum = 0;
+    std::copy(payload.begin() + adder, payload.end(),
+        reinterpret_cast<uint8_t*>(&server_checksum));
+    server_checksum = htonl(server_checksum);
+    //std::cout << "server_checksum:" << server_checksum << std::endl;
+
+    std::tuple<uint32_t, uint32_t> tup = check_sum(get_transfer_file_name());
+    uint32_t cksum = std::get<0>(tup);
+    
+    if (server_checksum == cksum) { return true; }
+    else { return false; }
+
+
 }
