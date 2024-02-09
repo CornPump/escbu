@@ -18,6 +18,23 @@ extern const int DEFAULT_PORT = 1234;
 extern const std::string DEFAULT_CLIENT_NAME = "It's always darkest before the dawn";
 extern const std::string DEFAULT_FILE_TO_TRANSFER = "test";
 
+std::vector<uint8_t> hex_string_to_bytes(const std::string& hex_string) {
+    
+    std::vector<uint8_t> bytes;
+
+    // Iterate over the string by pairs
+    for (size_t i = 0; i < hex_string.size(); i += 2) {
+        std::string byte_string = hex_string.substr(i, 2);
+
+        // Convert the pair of characters from hexadecimal to byte value
+        uint8_t byte_value = static_cast<uint8_t>(std::stoul(byte_string, nullptr, 16));
+
+        bytes.push_back(byte_value); // Push the byte value
+    }
+
+    return bytes;
+}
+
 void hexify(const unsigned char* buffer, unsigned int length)
 {
     std::ios::fmtflags f(std::cout.flags());

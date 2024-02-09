@@ -24,6 +24,7 @@ class Client {
 	std::string convert_uuid_to_string(std::vector<uint8_t> vec);
 	std::vector<uint8_t> append_name_to_message(std::vector<uint8_t>& message, std::string& str);
 	ResponseType start_registration_second_phase();
+	bool start_loging_second_phase(ResponseHandler& resh);
 	void set_aes_wrapper(AESWrapper* aes_wrapper);
 	bool send_my_file();
 	ResponseType send_file_sequence();
@@ -35,9 +36,11 @@ public:
 	~Client();
 	void print() const;
 	std::string get_name();
+	std::string get_private_key();
 	std::tuple <std::string, std::string> get_socket_params();
 	boost::asio::ip::tcp::socket& get_socket();
 	void set_client_id(const std::vector<uint8_t>& client_id);
+	std::vector<uint8_t> get_client_id();
 	ResponseType send_request(RequestType opcode);
 	ResponseType send_request(RequestType opcode, std::string public_key);
 	ResponseType send_request(RequestType opcode, std::filesystem::path full_path);

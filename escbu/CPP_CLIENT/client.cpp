@@ -15,6 +15,8 @@
 #include "aes_wrapper.h"
 #include "cksum.h"
 #include "cstdio"
+#include <bitset>
+
 
 Client::Client() {
 	
@@ -90,6 +92,39 @@ std::string Client::get_name() {
 
     return line;
     
+}
+
+std::vector<uint8_t> Client::get_client_id() {
+ 
+    std::filesystem::path full_path = std::filesystem::current_path() / ME_FILE;
+
+    std::ifstream infile(full_path.string());
+
+    std::string line;
+
+    if (!infile.is_open()) {
+        std::cout << "Unable to open the file" << std::endl;
+    }
+
+    // get name line
+    else {
+        std::getline(infile, line);
+        std::getline(infile, line);
+    }
+
+    // Close the file
+    infile.close();
+
+    if (line.length() >= NAME_MAX_LENGTH - 1) {
+
+        std::cout << "Name length too big, max allowed length = " << NAME_MAX_LENGTH << std::endl;
+        exit(1);
+    }
+
+    std::vector<uint8_t> vec = hex_string_to_bytes(line);
+
+    return vec;
+
 }
 
 std::tuple<std::string, std::string> Client::get_socket_params() {
@@ -209,15 +244,16 @@ std::vector<uint8_t> Client::append_name_to_message(std::vector<uint8_t>& messag
 
 ResponseType Client::send_request(RequestType opcode) {
 
-    std::vector<uint8_t> tmp_msg = create_basic_header(opcode);
-    std::vector<uint8_t> message = append_name_to_message(tmp_msg, this->name);
-    if (message.empty()) {return ResponseType::INTERNAL_F;}
-    
-    
+        
     // send request, then check what to do after.
 
     switch (opcode) {
     case RequestType::REGISTER:{
+
+        std::vector<uint8_t> tmp_msg = create_basic_header(opcode);
+        std::vector<uint8_t> message = append_name_to_message(tmp_msg, this->name);
+        if (message.empty()) { return ResponseType::INTERNAL_F; }
+
         boost::asio::write(this->get_socket(), boost::asio::buffer(message));
         std::cout << "Sent Request " << static_cast<int>(RequestType::REGISTER) << ":REGISTER" << std::endl;
 
@@ -275,9 +311,54 @@ ResponseType Client::send_request(RequestType opcode) {
     }
 
     case RequestType::LOGIN: {
-    
+
+        this->set_client_id(this->get_client_id());
+        std::vector<uint8_t> tmp_msg = create_basic_header(opcode);
+        std::vector<uint8_t> message = append_name_to_message(tmp_msg, this->name);
+        if (message.empty()) { return ResponseType::INTERNAL_F; }
         boost::asio::write(this->get_socket(), boost::asio::buffer(message));
         std::cout << "Sent Request "<< static_cast<int>(RequestType::LOGIN) << ":LOGIN" << std::endl;
+        ResponseHandler resh;
+        resh.read_minimum_header(this->get_socket());
+        resh.print();
+        ResponseType res = resh.get_opcode();
+        if (res == ResponseType::LOGIN_S) {
+            
+            bool aes_success = start_loging_second_phase(resh);
+            if (aes_success) {
+
+                ResponseType res3 = this->send_file_sequence();
+
+                if (res3 == ResponseType::CRC_SEQ_FINISH_S) {
+
+                    std::cout << "File sent succefully!" << std::endl;
+                    return res3;
+
+                }
+
+                if (res3 == ResponseType::CRC_SEQ_FINISH_F) {
+
+                    std::cout << "Server couldn't encrypt the file, sending file operation failed." << std::endl;
+                    return res3;
+
+                }
+
+                else { return this->write_general_error_message(res3); }
+            }
+            else { return this->write_general_error_message(ResponseType::INTERNAL_F); }
+
+        
+        }
+        else {
+        
+            if (res == ResponseType::LOGIN_F) {
+                std::cout << "Registeration failure due to code: " << static_cast<int>(ResponseType::LOGIN_F) <<
+                    ":LOGIN_F" <<std::endl;
+                return ResponseType::LOGIN_F;
+            }
+            else { return this->write_general_error_message(res); }
+
+        }
         break;
     }
 
@@ -286,31 +367,6 @@ ResponseType Client::send_request(RequestType opcode) {
     }
 }
 
-ResponseType Client::send_request(RequestType opcode, std::string public_key) {
-
-    std::vector<uint8_t> message = create_basic_header(opcode);
-
-    switch (opcode) {
-    case RequestType::SEND_PUBLIC_KEY:
-    default:
-        return ResponseType::INTERNAL_F;
-    }
-}
-
-ResponseType Client::send_request(RequestType opcode, std::filesystem::path full_path) {
-
-    std::vector<uint8_t> message = create_basic_header(opcode);
-
-    switch (opcode) {
-    case RequestType::CRC_APP:
-    case RequestType::CRC_DEN_RE:
-    case RequestType::CRC_DEN_FI:
-    case RequestType::SEND_FILE:
-    default:
-        return ResponseType::INTERNAL_F;
-    }
-
-}
 
 ResponseType Client::write_general_error_message(ResponseType res) {
     if (res == ResponseType::ERROR_F) {
@@ -354,6 +410,60 @@ std::string Client::convert_uuid_to_string(std::vector<uint8_t> vec) {
 
     return uuid_s;
 }
+
+
+std::string Client::get_private_key() {
+
+    std::filesystem::path full_path = std::filesystem::current_path() / PRIVATE_KEY_FILE;
+
+    std::ifstream infile(full_path.string());
+
+    std::string line;
+
+    if (!infile.is_open()) {
+        std::cout << "Unable to open the file" << std::endl;
+    }
+
+    std::stringstream buffer;
+    while (std::getline(infile, line)) {
+        buffer << line;
+    }
+
+    return buffer.str();
+
+}
+
+bool Client::start_loging_second_phase(ResponseHandler &resh) {
+
+    try {
+        std::cout << "Received AES_key, decrypting it using private_key" << std::endl;
+        std::vector<uint8_t> payload = resh.read_payload(this->get_socket());
+        std::vector<uint8_t> aes_key = { payload.begin() + DEFAULT_CLIENT_ID_SIZE, payload.end() };
+
+        // Convert to std::string
+        std::string str_aes_key(aes_key.begin(), aes_key.end());
+        const unsigned char* aes_key_ = reinterpret_cast<const unsigned char*>(str_aes_key.data());
+
+        std::string p_key_64 = this->get_private_key();
+        std::string p_key = Base64Wrapper::decode(p_key_64);
+        RSAPrivateWrapper privateWrapper(p_key);
+        std::string decrypted_aes_key = privateWrapper.decrypt(str_aes_key);
+        const unsigned char* aes_key_final = reinterpret_cast<const unsigned char*>(decrypted_aes_key.data());
+
+        // Create an AESWrapper with the provided key
+        AESWrapper* aes = new AESWrapper(aes_key_final, AESWrapper::DEFAULT_KEYLENGTH);
+
+        // set aes_wrapper param on client
+        this->set_aes_wrapper(aes);
+        return true;
+    }
+
+    catch (const std::exception& e) {
+        std::cerr << "Error opening file: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 
 ResponseType Client::start_registration_second_phase() {
 
