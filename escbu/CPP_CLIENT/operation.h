@@ -18,6 +18,7 @@ std::string create_encrypted_file(const std::string& filename, AESWrapper*& aes_
 void clear(uint8_t message[], int length);
 void hexify(const unsigned char* buffer, unsigned int length);
 void printHex(const std::vector<uint8_t>& data);
+std::vector<uint8_t> hex_string_to_bytes(const std::string& hexString);
 
 // Default transfer.info file ; file that represent the info about the client
 extern const std::string INFO_FILE;
